@@ -76,7 +76,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Full history so a secret committed and later removed is still found.
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      # The gitleaks CLI, not gitleaks/gitleaks-action. The scanner is MIT and
+      # free; it is the Action wrapper that requires a paid licence for
+      # organisation-owned repos, and it fails the job outright without one.
+      # Running the binary directly is the same scan with no licence.
+      - name: Scan git history for secrets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /tmp gitleaks
+          /tmp/gitleaks git . --no-banner --redact --exit-code 1
