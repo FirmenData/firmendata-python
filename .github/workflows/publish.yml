@@ -1,0 +1,99 @@
+# Publishes to PyPI on a version tag.
+#
+# ─── AUTHENTICATION ────────────────────────────────────────────────────────
+#
+# Trusted Publishing (OIDC). There is no PyPI token anywhere — GitHub mints a
+# short-lived credential per run and PyPI verifies it came from this exact
+# repository and workflow. Nothing to rotate, nothing to leak.
+#
+# PyPI supports "pending publishers", so this works for the very first
+# release of a project that does not exist yet. (npm does not, which is why
+# the JavaScript packages take a different route on their first publish.)
+#
+# ─── ONE-TIME SETUP ────────────────────────────────────────────────────────
+#
+# On https://pypi.org/manage/account/publishing/ add a pending publisher:
+#
+#   PyPI project name:  firmendata
+#   Owner:              FirmenData
+#   Repository name:    firmendata-python
+#   Workflow name:      publish.yml
+#   Environment name:   pypi
+#
+# Then create the `pypi` environment under repo Settings → Environments. The
+# environment is not decoration: it is where you add a required reviewer, so
+# a tag push cannot publish to PyPI without a human approving the run.
+#
+# ─── RELEASING ─────────────────────────────────────────────────────────────
+#
+#   1. bump __version__ in src/firmendata/_version.py
+#   2. commit, then:  git tag 0.1.0 && git push origin 0.1.0
+#
+# A version can never be re-uploaded to PyPI, even after deletion. The build
+# is verified here before the publish step runs, and the publish step is a
+# separate job so the artifacts are inspectable if it fails.
+
+name: Publish
+
+on:
+  push:
+    tags: ['*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -e '.[dev]' build twine
+
+      # A tag is not a licence to skip the tests.
+      - run: pytest -q
+      - run: mypy
+      - run: ruff check .
+
+      # The generated types must match the vendored contract, or we would
+      # ship an SDK that lies about the API.
+      - run: python scripts/generate_types.py
+      - run: git diff --exit-code -- src/firmendata/
+
+      - name: Tag must match the package version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          PKG=$(python -c "import re,pathlib; \
+            print(re.search(r'\"([^\"]+)\"', pathlib.Path('src/firmendata/_version.py').read_text()).group(1))")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag $TAG does not match __version__ $PKG"
+            exit 1
+          fi
+        if: github.event_name == 'push'
+
+      - run: python -m build
+      - run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Required to mint the OIDC token PyPI verifies. Nothing else is needed —
+      # in particular there is no PYPI_TOKEN secret.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

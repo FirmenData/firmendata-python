@@ -53,6 +53,10 @@ path = "src/firmendata/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/firmendata"]
+# PEP 561 marker. Without it type checkers ignore this package's annotations
+# entirely, which would quietly break the one thing the README promises about
+# types — and the `Typing :: Typed` classifier would be a lie.
+artifacts = ["src/firmendata/py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
