@@ -152,6 +152,8 @@ mypy && ruff check
 ## Links
 
 - API reference — <https://api.firmendata.com/v1/docs>
+- TypeScript SDK — <https://github.com/FirmenData/firmendata-node>
+- n8n node — <https://github.com/FirmenData/n8n-nodes-firmendata>
 - MCP server (for AI agents) — `https://mcp.firmendata.com/mcp`
 - Website — <https://firmendata.com>
 
