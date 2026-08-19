@@ -21,7 +21,7 @@ Company-name autocomplete is free and needs **no API key**:
 from firmendata import FirmenData
 
 for hit in FirmenData().autocomplete("siemens")["data"]:
-    print(hit["eu_id"], hit["name"])
+    print(hit["eu_id"], hit["display_name"])
 ```
 
 Keyless calls are limited to 1 request/second, 30/minute and 1000/day per IP.
@@ -47,7 +47,7 @@ results = fd.search(
 )
 
 for hit in results["data"]:
-    print(hit["name"], hit["city"])
+    print(hit["display_name"], hit["address"]["city"])
 
 # Paginate
 if results["pagination"]["has_more"]:
@@ -75,7 +75,7 @@ from firmendata import AsyncFirmenData
 async def main():
     async with AsyncFirmenData(api_key="firmendata_live_...") as fd:
         company = await fd.get_company("DEB1103R_HRB123456")
-        print(company["name"])
+        print(company["display_name"])
 
 asyncio.run(main())
 ```

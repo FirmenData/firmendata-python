@@ -220,11 +220,11 @@ class TestRetryPolicy:
             calls["n"] += 1
             if calls["n"] == 1:
                 return httpx.Response(500, json=problem("server-error", 500))
-            return httpx.Response(200, json={"data": [{"name": "SAP SE"}]})
+            return httpx.Response(200, json={"data": [{"display_name": "SAP SE"}]})
 
         result = client_with(handler, max_retries=2).autocomplete("sap")
         assert calls["n"] == 2
-        assert result["data"][0]["name"] == "SAP SE"
+        assert result["data"][0]["display_name"] == "SAP SE"
 
     def test_gives_up_and_raises_the_last_error(self):
         def handler(request):
@@ -249,13 +249,13 @@ class TestAsyncClient:
     async def test_autocomplete_without_a_key(self):
         def handler(request):
             assert request.headers.get("authorization") is None
-            return httpx.Response(200, json={"data": [{"name": "SAP SE"}]})
+            return httpx.Response(200, json={"data": [{"display_name": "SAP SE"}]})
 
         async with AsyncFirmenData(
             http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler))
         ) as fd:
             result = await fd.autocomplete("sap")
-        assert result["data"][0]["name"] == "SAP SE"
+        assert result["data"][0]["display_name"] == "SAP SE"
 
     async def test_errors_map_identically_to_sync(self):
         def handler(request):
