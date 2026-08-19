@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e '.[dev]'
+      - run: pytest -q
+      - run: ruff check .
+      - run: mypy
+        # One version is enough for type checking; the others only run tests.
+        if: matrix.python-version == '3.11'
+
+  # The SDK vendors contracts/openapi.v1.json and generates its types from it.
+  # If the committed types don't match what the vendored spec produces, the
+  # SDK is lying about the API — fail rather than ship that.
+  generated-types-are-current:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e '.[dev]'
+      - run: python scripts/generate_types.py
+      - name: Types match the vendored contract
+        run: |
+          if ! git diff --exit-code -- src/firmendata/types.py src/firmendata/params.py; then
+            echo "::error::Generated types are stale. Run 'python scripts/generate_types.py' and commit."
+            exit 1
+          fi
+
+  # Advisory: tells us when the live API has moved past our vendored copy.
+  # Never blocks — the SDK targets the spec it ships with, and a drifting
+  # upstream is a signal to cut a release, not a reason to fail this build.
+  upstream-drift:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare vendored spec against production
+        run: |
+          curl -sSL https://api.firmendata.com/v1/openapi.json -o /tmp/live.json
+          python - <<'PY'
+          import json
+          live = json.load(open('/tmp/live.json'))
+          vendored = json.load(open('contracts/openapi.v1.json'))
+          lp, vp = set(live['paths']), set(vendored['paths'])
+          if lp != vp:
+              print(f"::warning::Vendored spec is out of date. "
+                    f"added={sorted(lp - vp)} removed={sorted(vp - lp)}")
+          else:
+              print("Vendored spec matches production paths.")
+          PY
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
