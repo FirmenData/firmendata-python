@@ -1,0 +1,86 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "firmendata"
+dynamic = ["version"]
+description = "Official Python client for the firmendata German company-data API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [{ name = "FirmenData", email = "info@firmendata.com" }]
+keywords = [
+    "firmendata", "germany", "company-data", "handelsregister",
+    "unternehmensregister", "company-register", "kyc", "ubo", "api-client",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
+
+# httpx only. Response bodies are plain dicts described by generated
+# TypedDicts, so there is no pydantic dependency to collide with the
+# caller's own — a recurring source of pain in client libraries.
+dependencies = ["httpx>=0.27"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "respx>=0.21",
+    "mypy>=1.11",
+    "ruff>=0.6",
+    "datamodel-code-generator>=0.25",
+]
+
+[project.urls]
+Homepage = "https://firmendata.com"
+Documentation = "https://api.firmendata.com/v1/docs"
+Source = "https://github.com/FirmenData/firmendata-python"
+Issues = "https://github.com/FirmenData/firmendata-python/issues"
+
+[tool.hatch.version]
+path = "src/firmendata/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/firmendata"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# Generated files mirror the API's shape, not our style preferences.
+exclude = ["src/firmendata/types.py", "src/firmendata/params.py"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src/firmendata"]
+
+# Response bodies are parsed JSON, typed by the generated TypedDicts. Those
+# describe the API's shape for editors and type-checkers; they are not runtime
+# validators, and the SDK deliberately does not validate (that would mean
+# rejecting responses a newer API is entitled to send). So `_request` honestly
+# returns Any and each method narrows it to the documented shape — which is
+# exactly what `warn_return_any` flags. Disabled here rather than papered over
+# with ~30 `cast()` calls that would say the same thing more loudly.
+warn_return_any = false
+
+[[tool.mypy.overrides]]
+module = ["firmendata.types", "firmendata.params"]
+ignore_errors = true
