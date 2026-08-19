@@ -5,7 +5,7 @@ Autocomplete is free and needs no API key::
     from firmendata import FirmenData
 
     for hit in FirmenData().autocomplete("siemens")["data"]:
-        print(hit["name"], hit["eu_id"])
+        print(hit["display_name"], hit["eu_id"])
 
 Everything else needs a key from https://firmendata.com/de/account/api-keys::
 

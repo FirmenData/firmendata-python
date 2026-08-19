@@ -134,6 +134,10 @@ def main() -> int:
             "--target-python-version", "3.11",
             "--use-standard-collections",
             "--use-union-operator",
+            # Without this the header carries a generation timestamp, so the
+            # output differs on every run and the CI drift check can never
+            # pass — it would only ever report the clock moving.
+            "--disable-timestamp",
             "--formatters", "black",
             "--output", str(TYPES_OUT),
         ],
