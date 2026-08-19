@@ -5424,7 +5424,7 @@
   "paths": {
     "/v1/companies/autocomplete": {
       "get": {
-        "description": "Each hit carries just enough context — company name and register reference — to pick the right result out of a dropdown. Not meant for programmatic search — use `/companies/search` for that.\n\n**Free without an API key.** This is the only v1 endpoint you can call unauthenticated. Keyless requests are limited to **1 request/second, 30/minute and 1000/day per IP address**; send an `Authorization: Bearer <key>` header to get the standard account limits (5/second, 100/minute) instead. Either way the call costs 0 credits.\n\nSet `fetch_realtime=true` to also search the German company registers live and index any companies not yet known to firmendata — this is how a company founded days ago can be found before the regular register sweep reaches it. The freshly indexed companies appear in the same response. **`fetch_realtime` requires an API key** and is billed; keyless requests that set it are rejected with `401`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Each hit carries just enough context — company name and register reference — to pick the right result out of a dropdown. Not meant for programmatic search — use `/companies/search` for that.\n\n**Free without an API key.** This is the only v1 endpoint you can call unauthenticated. Keyless access is rate limited — modestly, and by address — and is intended for trying the API out, for a search box, or for low-volume use. Send an `Authorization: Bearer <key>` header for substantially higher limits; the call still costs 0 credits either way. Respect `Retry-After` on a `429`.\n\nSet `fetch_realtime=true` to also search the German company registers live and index any companies not yet known to firmendata — this is how a company founded days ago can be found before the regular register sweep reaches it. The freshly indexed companies appear in the same response. **`fetch_realtime` requires an API key** and is billed; keyless requests that set it are rejected with `401`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "autocompleteCompanies",
         "parameters": [
           {
@@ -9263,7 +9263,7 @@
   ],
   "servers": [
     {
-      "description": "FirmenData API",
+      "description": "Production",
       "url": "https://api.firmendata.com"
     }
   ],

@@ -146,8 +146,10 @@ class FirmenData(_BaseClient):
         """Company-name suggestions for a search box.
 
         Free and callable without an API key — the one endpoint that is.
-        Keyless callers are limited to 1 request/second, 30/minute and
-        1000/day per IP; supplying a key raises that to the account limits.
+        Keyless calls are rate limited by address; supplying a key raises
+        that substantially. The exact keyless limits are not published and
+        may be tightened without notice — honour ``Retry-After`` on a 429
+        (this client does).
 
         ``fetch_realtime`` searches the German registers live so a company
         founded days ago is findable immediately. It **requires an API key**
