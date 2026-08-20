@@ -111,6 +111,26 @@ class TestRequestShaping:
         client_with(handler).autocomplete("sap")
         assert seen["ua"].startswith("firmendata-python/")
 
+    def test_path_ids_are_percent_encoded(self):
+        """A hostile id must not be able to rewrite the request target.
+
+        Unencoded, this id would resolve to ``/v1/subscriptions`` with a
+        smuggled ``fetch_realtime=true`` — a different endpoint, billed to
+        the caller's key. It has to stay one opaque path segment.
+        """
+        seen = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen["path"] = request.url.raw_path.decode()
+            return httpx.Response(200, json={})
+
+        hostile = "../subscriptions?fetch_realtime=true#"
+        client_with(handler, api_key="k").get_company(hostile)
+        assert seen["path"] == (
+            "/v1/companies/..%2Fsubscriptions%3Ffetch_realtime%3Dtrue%23"
+            "?fetch_realtime=false"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Errors

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json as _json
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
+from urllib.parse import quote
 
 from ._retry import DEFAULT_MAX_RETRIES
 from ._version import __version__
@@ -19,6 +20,17 @@ ParamValue = str | int | float | bool | Sequence[str] | Sequence[int] | None
 #: strings, but `list` is invariant, so a narrower `list[tuple[str, str]]`
 #: would not be accepted where httpx wants this.
 QueryParamPairs = list[tuple[str, str | int | float | bool | None]]
+
+
+def _segment(value: str) -> str:
+    """Percent-encode a caller-supplied path segment.
+
+    ``safe=""`` so ``/``, ``?`` and ``#`` are encoded too — otherwise an id
+    taken from untrusted input could rewrite the request path or smuggle in
+    extra query parameters (e.g. ``fetch_realtime=true``) under the caller's
+    API key.
+    """
+    return quote(value, safe="")
 
 
 class _BaseClient:
