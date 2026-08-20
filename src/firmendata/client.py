@@ -7,7 +7,7 @@ from typing import Any, Unpack
 
 import httpx
 
-from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient
+from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient, _segment
 from ._retry import DEFAULT_MAX_RETRIES, backoff_seconds, should_retry
 from .errors import APIConnectionError, APITimeoutError, RateLimitError
 from .params import SearchFilters, SubscriptionFilters
@@ -176,34 +176,34 @@ class FirmenData(_BaseClient):
     def get_company(self, eu_id: str, *, fetch_realtime: bool = False) -> CompanyDetail:
         """Full profile for one company."""
         return self._request(
-            "GET", f"/v1/companies/{eu_id}",
+            "GET", f"/v1/companies/{_segment(eu_id)}",
             params={"fetch_realtime": fetch_realtime},
         )
 
     def get_financials(self, eu_id: str) -> CompanyFinancials:
         """Multi-year financial statements."""
-        return self._request("GET", f"/v1/companies/{eu_id}/financials")
+        return self._request("GET", f"/v1/companies/{_segment(eu_id)}/financials")
 
     def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False,
     ) -> ShareholdersReport:
         """Cap table from the most recent Gesellschafterliste (GmbH/UG)."""
         return self._request(
-            "GET", f"/v1/companies/{eu_id}/shareholders",
+            "GET", f"/v1/companies/{_segment(eu_id)}/shareholders",
             params={"fetch_realtime": fetch_realtime},
         )
 
     def get_ubo(self, eu_id: str, *, fetch_realtime: bool = False) -> UboReport:
         """Ultimate beneficial owners, resolved through ownership chains."""
         return self._request(
-            "GET", f"/v1/companies/{eu_id}/ubo",
+            "GET", f"/v1/companies/{_segment(eu_id)}/ubo",
             params={"fetch_realtime": fetch_realtime},
         )
 
     def get_history(self, eu_id: str, *, fetch_realtime: bool = False) -> CompanyHistory:
         """Chronological register history."""
         return self._request(
-            "GET", f"/v1/companies/{eu_id}/history",
+            "GET", f"/v1/companies/{_segment(eu_id)}/history",
             params={"fetch_realtime": fetch_realtime},
         )
 
@@ -217,7 +217,7 @@ class FirmenData(_BaseClient):
     ) -> CompanyDocumentDownload:
         """Presigned download URL for a register document."""
         return self._request(
-            "GET", f"/v1/companies/{eu_id}/documents/download",
+            "GET", f"/v1/companies/{_segment(eu_id)}/documents/download",
             params={
                 "file_type": file_type,
                 "file_id": file_id,
@@ -240,25 +240,25 @@ class FirmenData(_BaseClient):
         return self._request("POST", "/v1/subscriptions", json=body)
 
     def get_subscription(self, subscription_id: str) -> Subscription:
-        return self._request("GET", f"/v1/subscriptions/{subscription_id}")
+        return self._request("GET", f"/v1/subscriptions/{_segment(subscription_id)}")
 
     def delete_subscription(self, subscription_id: str) -> Any:
-        return self._request("DELETE", f"/v1/subscriptions/{subscription_id}")
+        return self._request("DELETE", f"/v1/subscriptions/{_segment(subscription_id)}")
 
     def list_events(
             self, subscription_id: str, *, limit: int | None = None,
             offset: int | None = None,
     ) -> SubscriptionEventList:
         return self._request(
-            "GET", f"/v1/subscriptions/{subscription_id}/events",
+            "GET", f"/v1/subscriptions/{_segment(subscription_id)}/events",
             params={"limit": limit, "offset": offset},
         )
 
     def get_event(self, event_id: str) -> SubscriptionEvent:
-        return self._request("GET", f"/v1/subscriptions/events/{event_id}")
+        return self._request("GET", f"/v1/subscriptions/events/{_segment(event_id)}")
 
     def resend_event(self, event_id: str) -> SubscriptionEventResendResponse:
-        return self._request("POST", f"/v1/subscriptions/events/{event_id}/resend")
+        return self._request("POST", f"/v1/subscriptions/events/{_segment(event_id)}/resend")
 
     def test_delivery(self, **body: Any) -> SubscriptionTestResponse:
         """Send a synthetic event to a webhook URL to verify delivery."""

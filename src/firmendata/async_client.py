@@ -13,7 +13,7 @@ from typing import Any, Unpack
 
 import httpx
 
-from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient
+from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient, _segment
 from ._retry import DEFAULT_MAX_RETRIES, backoff_seconds, should_retry
 from .errors import APIConnectionError, APITimeoutError, RateLimitError
 from .params import SearchFilters, SubscriptionFilters
@@ -146,23 +146,23 @@ class AsyncFirmenData(_BaseClient):
             self, eu_id: str, *, fetch_realtime: bool = False,
     ) -> CompanyDetail:
         return await self._request(
-            "GET", f"/v1/companies/{eu_id}", params={"fetch_realtime": fetch_realtime},
+            "GET", f"/v1/companies/{_segment(eu_id)}", params={"fetch_realtime": fetch_realtime},
         )
 
     async def get_financials(self, eu_id: str) -> CompanyFinancials:
-        return await self._request("GET", f"/v1/companies/{eu_id}/financials")
+        return await self._request("GET", f"/v1/companies/{_segment(eu_id)}/financials")
 
     async def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False,
     ) -> ShareholdersReport:
         return await self._request(
-            "GET", f"/v1/companies/{eu_id}/shareholders",
+            "GET", f"/v1/companies/{_segment(eu_id)}/shareholders",
             params={"fetch_realtime": fetch_realtime},
         )
 
     async def get_ubo(self, eu_id: str, *, fetch_realtime: bool = False) -> UboReport:
         return await self._request(
-            "GET", f"/v1/companies/{eu_id}/ubo",
+            "GET", f"/v1/companies/{_segment(eu_id)}/ubo",
             params={"fetch_realtime": fetch_realtime},
         )
 
@@ -170,7 +170,7 @@ class AsyncFirmenData(_BaseClient):
             self, eu_id: str, *, fetch_realtime: bool = False,
     ) -> CompanyHistory:
         return await self._request(
-            "GET", f"/v1/companies/{eu_id}/history",
+            "GET", f"/v1/companies/{_segment(eu_id)}/history",
             params={"fetch_realtime": fetch_realtime},
         )
 
@@ -183,7 +183,7 @@ class AsyncFirmenData(_BaseClient):
             fetch_realtime: bool = False,
     ) -> CompanyDocumentDownload:
         return await self._request(
-            "GET", f"/v1/companies/{eu_id}/documents/download",
+            "GET", f"/v1/companies/{_segment(eu_id)}/documents/download",
             params={
                 "file_type": file_type,
                 "file_id": file_id,
@@ -203,26 +203,26 @@ class AsyncFirmenData(_BaseClient):
         return await self._request("POST", "/v1/subscriptions", json=body)
 
     async def get_subscription(self, subscription_id: str) -> Subscription:
-        return await self._request("GET", f"/v1/subscriptions/{subscription_id}")
+        return await self._request("GET", f"/v1/subscriptions/{_segment(subscription_id)}")
 
     async def delete_subscription(self, subscription_id: str) -> Any:
-        return await self._request("DELETE", f"/v1/subscriptions/{subscription_id}")
+        return await self._request("DELETE", f"/v1/subscriptions/{_segment(subscription_id)}")
 
     async def list_events(
             self, subscription_id: str, *, limit: int | None = None,
             offset: int | None = None,
     ) -> SubscriptionEventList:
         return await self._request(
-            "GET", f"/v1/subscriptions/{subscription_id}/events",
+            "GET", f"/v1/subscriptions/{_segment(subscription_id)}/events",
             params={"limit": limit, "offset": offset},
         )
 
     async def get_event(self, event_id: str) -> SubscriptionEvent:
-        return await self._request("GET", f"/v1/subscriptions/events/{event_id}")
+        return await self._request("GET", f"/v1/subscriptions/events/{_segment(event_id)}")
 
     async def resend_event(self, event_id: str) -> SubscriptionEventResendResponse:
         return await self._request(
-            "POST", f"/v1/subscriptions/events/{event_id}/resend",
+            "POST", f"/v1/subscriptions/events/{_segment(event_id)}/resend",
         )
 
     async def test_delivery(self, **body: Any) -> SubscriptionTestResponse:
