@@ -307,25 +307,35 @@ class Problem(TypedDict):
 Rechtsform: TypeAlias = Literal[
     'GmbH',
     'KG',
-    'e.K.; e.Kfm.; e.Kfr.',
+    'e.K.',
     'eGbR',
     'UG',
     'GmbH & Co. KG',
     'OHG',
     'PartG',
+    'e.V.',
     'AG',
     'eG',
-    'ausl. Rechtsform',
-    'Rechtsform ausländischen Rechts HRB',
-    'e.V.',
+    'ausländische Rechtsform (HRB)',
     'gGmbH',
     'UG & Co. KG',
+    'ausländische Rechtsform',
     'SE',
+    'sonstige juristische Person',
     'EWIV',
     'KGaA',
-    'sonst. juristische Person, d. im HRA eingetragen ist',
+    'Ltd. & Co. KG',
+    'sonstige juristische Person (HRA)',
+    'GmbH & Co. OHG',
     'VVaG',
+    'SE & Co. KG',
+    'ausländische Rechtsform (HRA)',
+    'AG & Co. KG',
+    'ausländische Rechtsform (PR)',
     'SCE',
+    'ausländische Rechtsform (GnR)',
+    'Stiftung & Co. KG',
+    'eG & Co. KG',
 ]
 
 
@@ -561,16 +571,7 @@ class SocialProfile(TypedDict):
     url: str
 
 
-Sort: TypeAlias = Literal[
-    'name',
-    'city',
-    'bundesland',
-    'industry',
-    'revenue',
-    'profit',
-    'employee_count',
-    'cpv',
-]
+Sort: TypeAlias = Literal['name', 'revenue', 'profit', 'total_assets', 'employee_count']
 
 
 SortDirection: TypeAlias = Literal['asc', 'desc']
