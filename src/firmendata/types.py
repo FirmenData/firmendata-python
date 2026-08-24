@@ -86,6 +86,17 @@ class CompanyDocument(TypedDict):
     updated_at: str
 
 
+class CompanyListSummary(TypedDict):
+    alerts_enabled: NotRequired[bool]
+    company_count: NotRequired[int]
+    created_at: str
+    is_shared: NotRequired[bool]
+    list_id: int
+    name: str
+    object: NotRequired[Literal['company_list']]
+    updated_at: str
+
+
 class EmployeeYear(TypedDict):
     full_time: NotRequired[int | None]
     object: NotRequired[Literal['employee_year']]
@@ -119,6 +130,17 @@ class FinancialRow(TypedDict):
     subsubsubsection: NotRequired[str | None]
     title: str
     year: int
+
+
+class FounderRecordItem(TypedDict):
+    birth_year: NotRequired[int | None]
+    entry_date: NotRequired[str | None]
+    first_name: NotRequired[str | None]
+    last_name: NotRequired[str | None]
+    object: NotRequired[Literal['founder']]
+    role: NotRequired[str | None]
+    share_percent: NotRequired[float | None]
+    still_serving: NotRequired[bool]
 
 
 class Freshness(TypedDict):
@@ -783,6 +805,22 @@ class CompanyHistory(TypedDict):
     zweigniederlassungen: NotRequired[list[RegisterHistoryEvent]]
 
 
+class CompanyListDetailResponse(TypedDict):
+    data: NotRequired[list[SearchHit]]
+    filters_echo: NotRequired[dict[str, Any]]
+    list_id: int
+    name: str
+    object: NotRequired[Literal['list']]
+    pagination: NotRequired[PaginationInfo]
+
+
+class CompanyListsResponse(TypedDict):
+    data: NotRequired[list[CompanyListSummary]]
+    filters_echo: NotRequired[dict[str, Any]]
+    object: NotRequired[Literal['list']]
+    pagination: NotRequired[PaginationInfo]
+
+
 class ContactBlock(TypedDict):
     impressum_url: NotRequired[str | None]
     object: NotRequired[Literal['company_contact']]
@@ -811,6 +849,23 @@ class FinancialSummaryBlock(TypedDict):
     latest_total_assets: NotRequired[Money | None]
     latest_total_liabilities_and_equity: NotRequired[Money | None]
     object: NotRequired[Literal['financial_summary']]
+
+
+class FounderProfileBlock(TypedDict):
+    as_of: NotRequired[str | None]
+    evidence_source: NotRequired[str | None]
+    family_confidence: NotRequired[Literal['confirmed', 'likely'] | None]
+    family_managed: NotRequired[bool | None]
+    family_signals: NotRequired[list[str]]
+    family_surname: NotRequired[str | None]
+    founder_count: NotRequired[int]
+    founder_led: NotRequired[bool | None]
+    founder_led_confidence: NotRequired[Literal['confirmed', 'likely'] | None]
+    founder_led_since: NotRequired[str | None]
+    founders: NotRequired[list[FounderRecordItem]]
+    object: NotRequired[Literal['founder_profile']]
+    oldest_founder_birth_year: NotRequired[int | None]
+    succession_risk: NotRequired[bool | None]
 
 
 class IndustryBlock(TypedDict):
@@ -963,6 +1018,7 @@ class CompanyDetail(TypedDict):
     eu_id: str
     financial_summary: NotRequired[FinancialSummaryBlock | None]
     first_register_entry_at: NotRequired[str | None]
+    founder_profile: NotRequired[FounderProfileBlock | None]
     founding_document_date: NotRequired[str | None]
     freshness: Freshness
     industry_categorization: IndustryBlock
