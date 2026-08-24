@@ -625,6 +625,17 @@
             "description": "Date of the company's first observable register entry.",
             "title": "First Register Entry At"
           },
+          "founder_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FounderProfileBlock"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Founder, family-involvement and succession assessment derived from the register's board history. `null` when the company could not be assessed at all."
+          },
           "founding_document_date": {
             "anyOf": [
               {
@@ -1225,6 +1236,144 @@
         "title": "CompanyHistory",
         "type": "object"
       },
+      "CompanyListDetailResponse": {
+        "description": "Response envelope for `GET /v1/lists/{list_id}`.",
+        "properties": {
+          "data": {
+            "description": "One page of the list's companies. Same row shape as `/companies/search`, so both surfaces deserialize into one type.",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "filters_echo": {
+            "additionalProperties": true,
+            "description": "The effective filter values applied to this query, echoed back for client convenience.",
+            "title": "Filters Echo",
+            "type": "object"
+          },
+          "list_id": {
+            "description": "Identifier of the list.",
+            "title": "List Id",
+            "type": "integer"
+          },
+          "name": {
+            "description": "List name as set in the app.",
+            "title": "Name",
+            "type": "string"
+          },
+          "object": {
+            "const": "list",
+            "default": "list",
+            "description": "Discriminator. Always `list`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo",
+            "description": "Pagination metadata for this page."
+          }
+        },
+        "required": [
+          "list_id",
+          "name"
+        ],
+        "title": "CompanyListDetailResponse",
+        "type": "object"
+      },
+      "CompanyListSummary": {
+        "description": "One of the caller's company lists, without its companies.",
+        "properties": {
+          "alerts_enabled": {
+            "default": false,
+            "description": "`true` when change alerts are switched on for this list.",
+            "title": "Alerts Enabled",
+            "type": "boolean"
+          },
+          "company_count": {
+            "default": 0,
+            "description": "How many companies are on the list.",
+            "title": "Company Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "description": "When the list was created.",
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "is_shared": {
+            "default": false,
+            "description": "`true` when a public share link is currently active.",
+            "title": "Is Shared",
+            "type": "boolean"
+          },
+          "list_id": {
+            "description": "Identifier to pass to `GET /v1/lists/{list_id}`.",
+            "title": "List Id",
+            "type": "integer"
+          },
+          "name": {
+            "description": "List name as set in the app.",
+            "title": "Name",
+            "type": "string"
+          },
+          "object": {
+            "const": "company_list",
+            "default": "company_list",
+            "description": "Discriminator. Always `company_list`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "When the list was last changed.",
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "list_id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CompanyListSummary",
+        "type": "object"
+      },
+      "CompanyListsResponse": {
+        "description": "Response envelope for `GET /v1/lists`.",
+        "properties": {
+          "data": {
+            "description": "The caller's lists, newest first.",
+            "items": {
+              "$ref": "#/components/schemas/CompanyListSummary"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "filters_echo": {
+            "additionalProperties": true,
+            "description": "The effective filter values applied to this query, echoed back for client convenience.",
+            "title": "Filters Echo",
+            "type": "object"
+          },
+          "object": {
+            "const": "list",
+            "default": "list",
+            "description": "Discriminator. Always `list`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo",
+            "description": "Pagination metadata for this page."
+          }
+        },
+        "title": "CompanyListsResponse",
+        "type": "object"
+      },
       "ContactBlock": {
         "description": "Contact/web-presence block. Populated only when `expand=contact`.",
         "properties": {
@@ -1704,6 +1853,273 @@
           }
         },
         "title": "FinancialSummaryBlock",
+        "type": "object"
+      },
+      "FounderProfileBlock": {
+        "description": "Founder, family-involvement and succession assessment.\n\nEvery field is **derived** from the register's board history rather\nthan read off a filing, so each verdict ships with the evidence that\nproduced it. The three verdicts are deliberately nullable and `null`\nnever means \"no\": it means the register does not support an answer.",
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register snapshot this rests on. A director who resigned after this date is not yet reflected.",
+            "title": "As Of"
+          },
+          "evidence_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which register sources backed this assessment: `cd` (chronological extract), `si` (structured snapshot) or `cd+si`.",
+            "title": "Evidence Source"
+          },
+          "family_confidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "likely"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`confirmed` rests on two identified people; `likely` on the name alone.",
+            "title": "Family Confidence"
+          },
+          "family_managed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether two or more members of one family hold an ownership or governing role. `null` when the register shows only one person and the company name carries no family signal — there is then nothing to compare against, which is not the same as unrelated.",
+            "title": "Family Managed"
+          },
+          "family_signals": {
+            "description": "Which signals fired: `shared_surname`, `eponymous` (a person's surname is in the company name), `lexical` (`Gebr.`, `& Söhne`), `multigenerational` (relatives a generation apart), `shared_address`.",
+            "examples": [
+              [
+                "shared_surname",
+                "eponymous"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Family Signals",
+            "type": "array"
+          },
+          "family_surname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Normalised surname the family signal rests on.",
+            "title": "Family Surname"
+          },
+          "founder_count": {
+            "default": 0,
+            "description": "How many natural persons were identified at first registration.",
+            "title": "Founder Count",
+            "type": "integer"
+          },
+          "founder_led": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether someone holding a role at first registration is still in office. `null` when the chronological extract is missing, or begins with a transfer from another register court — its first entry then records the move, not the founding.",
+            "title": "Founder Led"
+          },
+          "founder_led_confidence": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "likely"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`likely` when the company was renamed shortly after registration, the signature of a shelf company (Vorratsgesellschaft) whose first officer is the provider's nominee rather than a founder.",
+            "title": "Founder Led Confidence"
+          },
+          "founder_led_since": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Start of the longest-serving founder's tenure.",
+            "title": "Founder Led Since"
+          },
+          "founders": {
+            "description": "The identified founders.",
+            "items": {
+              "$ref": "#/components/schemas/FounderRecordItem"
+            },
+            "title": "Founders",
+            "type": "array"
+          },
+          "object": {
+            "const": "founder_profile",
+            "default": "founder_profile",
+            "description": "Discriminator. Always `founder_profile`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "oldest_founder_birth_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Birth year of the oldest founder still serving.",
+            "title": "Oldest Founder Birth Year"
+          },
+          "succession_risk": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the oldest serving founder has reached 65. `null` when the company is not founder-led, or no founder birth date is on record.",
+            "title": "Succession Risk"
+          }
+        },
+        "title": "FounderProfileBlock",
+        "type": "object"
+      },
+      "FounderRecordItem": {
+        "description": "One person identified as holding a role at first registration.",
+        "properties": {
+          "birth_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Year of birth, when the register records a birth date.",
+            "title": "Birth Year"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the first register entry, `DD.MM.YYYY`.",
+            "title": "Entry Date"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Given name as filed.",
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Family name as filed.",
+            "title": "Last Name"
+          },
+          "object": {
+            "const": "founder",
+            "default": "founder",
+            "description": "Discriminator. Always `founder`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Role held at first registration (e.g. `Geschäftsführer`, `Kommanditist`).",
+            "examples": [
+              "Geschäftsführer"
+            ],
+            "title": "Role"
+          },
+          "share_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Capital share held at founding, in percent. Only limited partners (Kommanditisten) record this in the register; for every other legal form the founding cap table is not public register data and this is `null`.",
+            "title": "Share Percent"
+          },
+          "still_serving": {
+            "default": false,
+            "description": "Whether this person is still in office.",
+            "title": "Still Serving",
+            "type": "boolean"
+          }
+        },
+        "title": "FounderRecordItem",
         "type": "object"
       },
       "Freshness": {
@@ -6405,6 +6821,69 @@
               ],
               "title": "Tender Role"
             }
+          },
+          {
+            "description": "Restrict to companies where two or more members of one family hold an ownership or governing role (`true`), or where the people on record are unrelated (`false`).\n\nDerived from the register: shared surnames among owners and officers, a founder's surname carried in the company name, family wording in the name (`Gebr.`, `& Söhne`), a generation gap between two relatives, or a shared address. Companies whose register entry shows only one person and whose name says nothing are reported as neither — they are excluded from both `true` and `false` rather than assumed unrelated. Spouses who took different surnames are not visible to this filter, so it under-reports rather than over-claims.",
+            "in": "query",
+            "name": "family_managed",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to companies where two or more members of one family hold an ownership or governing role (`true`), or where the people on record are unrelated (`false`).\n\nDerived from the register: shared surnames among owners and officers, a founder's surname carried in the company name, family wording in the name (`Gebr.`, `& Söhne`), a generation gap between two relatives, or a shared address. Companies whose register entry shows only one person and whose name says nothing are reported as neither — they are excluded from both `true` and `false` rather than assumed unrelated. Spouses who took different surnames are not visible to this filter, so it under-reports rather than over-claims.",
+              "examples": [
+                true
+              ],
+              "title": "Family Managed"
+            }
+          },
+          {
+            "description": "Restrict to companies where a person holding an ownership or governing role at first registration is still in office (`true`), or where the founding officers have all been replaced (`false`).\n\nRequires the chronological register extract, so companies whose history has not been parsed are excluded from both values. Companies whose extract begins with a transfer from another register court are also excluded: their first entry records the move, not the founding.",
+            "in": "query",
+            "name": "founder_led",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to companies where a person holding an ownership or governing role at first registration is still in office (`true`), or where the founding officers have all been replaced (`false`).\n\nRequires the chronological register extract, so companies whose history has not been parsed are excluded from both values. Companies whose extract begins with a transfer from another register court are also excluded: their first entry records the move, not the founding.",
+              "examples": [
+                true
+              ],
+              "title": "Founder Led"
+            }
+          },
+          {
+            "description": "Restrict to founder-led companies whose oldest serving founder has reached 65 (`true`), or has not (`false`). Companies that are not founder-led, and founders with no birth date on record, are excluded from both values.",
+            "in": "query",
+            "name": "succession_risk",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict to founder-led companies whose oldest serving founder has reached 65 (`true`), or has not (`false`). Companies that are not founder-led, and founders with no birth date on record, are excluded from both values.",
+              "examples": [
+                true
+              ],
+              "title": "Succession Risk"
+            }
           }
         ],
         "responses": {
@@ -7765,6 +8244,402 @@
             "label": "JavaScript (fetch)",
             "lang": "js",
             "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/companies/DEF1103R.HRB279792B/ubo\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
+    "/v1/lists": {
+      "get": {
+        "description": "Every company list the authenticated caller owns, newest first.\n\nReturns each list's id, name, company count and whether change alerts are\nenabled — enough to pick one and fetch its companies with\n`GET /v1/lists/{list_id}`. Lists are created and edited in the web app.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "operationId": "getLists",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyListsResponse"
+                }
+              }
+            },
+            "description": "The caller's lists."
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "One or more query parameters are invalid.",
+                  "errors": [
+                    {
+                      "code": "less_than_or_equal",
+                      "path": "limit"
+                    },
+                    {
+                      "code": "enum_mismatch",
+                      "path": "wz_2025_code"
+                    }
+                  ],
+                  "instance": "/v1/companies/search",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 422,
+                  "title": "Request validation failed.",
+                  "type": "https://api.firmendata.com/problems/validation-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Request validation failed; see `errors[]` for per-field details."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1.0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "Your company lists",
+        "tags": [
+          "Lists"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/lists\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/lists\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/lists\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
+    "/v1/lists/{list_id}": {
+      "get": {
+        "description": "One page of companies from one of the caller's lists.\n\n- **Rows** match `GET /v1/companies/search` hits exactly, so both surfaces\n  deserialize into the same type\n- **`sort`** orders the whole list before the page is cut, so paging never\n  reshuffles rows. Omit it for the order companies were added in\n- **Pagination** is the standard opaque cursor; `pagination.total_approx` is\n  the list's exact size\n\nA list id that does not exist, or belongs to someone else, returns `404` —\nthe two are deliberately indistinguishable.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "operationId": "getList",
+        "parameters": [
+          {
+            "description": "Identifier of one of your lists, from `GET /v1/lists`.",
+            "in": "path",
+            "name": "list_id",
+            "required": true,
+            "schema": {
+              "description": "Identifier of one of your lists, from `GET /v1/lists`.",
+              "examples": [
+                42
+              ],
+              "minimum": 1,
+              "title": "List Id",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Companies per page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "description": "Companies per page.",
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response to fetch the next page.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response to fetch the next page.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Order the list by a column instead of by when companies were added. Same vocabulary as `/companies/search`.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Sort"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Order the list by a column instead of by when companies were added. Same vocabulary as `/companies/search`.",
+              "title": "Sort"
+            }
+          },
+          {
+            "description": "Sort direction; applies only with `sort`.",
+            "in": "query",
+            "name": "sort_direction",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortDirection",
+              "default": "desc",
+              "description": "Sort direction; applies only with `sort`."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyListDetailResponse"
+                }
+              }
+            },
+            "description": "One page of the list's companies."
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "No company with id DEF1103R.HRB999999B.",
+                  "instance": "/v1/companies/DEF1103R.HRB999999B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 404,
+                  "title": "Resource not found.",
+                  "type": "https://api.firmendata.com/problems/not-found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "The requested resource does not exist."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "One or more query parameters are invalid.",
+                  "errors": [
+                    {
+                      "code": "less_than_or_equal",
+                      "path": "limit"
+                    },
+                    {
+                      "code": "enum_mismatch",
+                      "path": "wz_2025_code"
+                    }
+                  ],
+                  "instance": "/v1/companies/search",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 422,
+                  "title": "Request validation failed.",
+                  "type": "https://api.firmendata.com/problems/validation-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Request validation failed; see `errors[]` for per-field details."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "Companies on a list",
+        "tags": [
+          "Lists"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/lists/{list_id}\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/lists/{list_id}\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/lists/{list_id}\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
           }
         ]
       }
