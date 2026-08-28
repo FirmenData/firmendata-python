@@ -97,6 +97,9 @@ class CompanyListSummary(TypedDict):
     updated_at: str
 
 
+CompanySize: TypeAlias = Literal['klein', 'mittelgross']
+
+
 class EmployeeYear(TypedDict):
     full_time: NotRequired[int | None]
     object: NotRequired[Literal['employee_year']]
@@ -507,7 +510,7 @@ class RegisterHistoryEvent(TypedDict):
     object: NotRequired[Literal['register_history_event']]
 
 
-RegisterType: TypeAlias = Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR']
+RegisterType: TypeAlias = Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR']
 
 
 class RelatedCompany(TypedDict):
@@ -836,10 +839,15 @@ class EmployeeHistoryBlock(TypedDict):
 
 class FinancialMetric(TypedDict):
     balance_sheet_total: NotRequired[Money | None]
+    ceiling_basis: NotRequired[str | None]
+    gross_profit: NotRequired[Money | None]
     liabilities_and_equity_total: NotRequired[Money | None]
     object: NotRequired[Literal['financial_metric']]
     profit: NotRequired[Money | None]
     revenue: NotRequired[Money | None]
+    revenue_ceiling: NotRequired[Money | None]
+    size_basis: NotRequired[str | None]
+    size_class: NotRequired[str | None]
     year: int
 
 
