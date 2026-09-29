@@ -169,7 +169,9 @@ class FirmenData(_BaseClient):
 
             fd.search(city=["Berlin", "Hamburg"], revenue_min=1_000_000)
 
-        Paginate by passing ``pagination.next_cursor`` back as ``cursor``.
+        Paginate by passing ``pagination.next_cursor`` back as ``cursor``,
+        unchanged — cursors are signed, and an edited one is rejected. Unknown
+        filter names and inverted ranges raise ``ValidationError``.
         """
         return self._request("GET", "/v1/companies/search", params=dict(filters))
 
@@ -180,9 +182,22 @@ class FirmenData(_BaseClient):
             params={"fetch_realtime": fetch_realtime},
         )
 
-    def get_financials(self, eu_id: str) -> CompanyFinancials:
-        """Multi-year financial statements."""
-        return self._request("GET", f"/v1/companies/{_segment(eu_id)}/financials")
+    def get_financials(
+            self, eu_id: str, *, include_line_items: bool = False, years: int | None = None,
+    ) -> CompanyFinancials:
+        """Multi-year financial statements.
+
+        Lean by default: the structured P&L / balance-sheet rows come only with
+        ``include_line_items=True``, and ``years`` keeps the N most recent
+        fiscal years in every per-year array.
+        """
+        return self._request(
+            "GET", f"/v1/companies/{_segment(eu_id)}/financials",
+            params={
+                "include": ["line_items"] if include_line_items else None,
+                "years": years,
+            },
+        )
 
     def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False,
@@ -247,11 +262,12 @@ class FirmenData(_BaseClient):
 
     def list_events(
             self, subscription_id: str, *, limit: int | None = None,
-            offset: int | None = None,
+            cursor: str | None = None, offset: int | None = None,
     ) -> SubscriptionEventList:
+        """One page of delivery events; pass ``pagination.next_cursor`` back as ``cursor``."""
         return self._request(
             "GET", f"/v1/subscriptions/{_segment(subscription_id)}/events",
-            params={"limit": limit, "offset": offset},
+            params={"limit": limit, "cursor": cursor, "offset": offset},
         )
 
     def get_event(self, event_id: str) -> SubscriptionEvent:

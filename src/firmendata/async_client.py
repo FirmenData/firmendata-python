@@ -149,8 +149,16 @@ class AsyncFirmenData(_BaseClient):
             "GET", f"/v1/companies/{_segment(eu_id)}", params={"fetch_realtime": fetch_realtime},
         )
 
-    async def get_financials(self, eu_id: str) -> CompanyFinancials:
-        return await self._request("GET", f"/v1/companies/{_segment(eu_id)}/financials")
+    async def get_financials(
+            self, eu_id: str, *, include_line_items: bool = False, years: int | None = None,
+    ) -> CompanyFinancials:
+        return await self._request(
+            "GET", f"/v1/companies/{_segment(eu_id)}/financials",
+            params={
+                "include": ["line_items"] if include_line_items else None,
+                "years": years,
+            },
+        )
 
     async def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False,
@@ -210,11 +218,11 @@ class AsyncFirmenData(_BaseClient):
 
     async def list_events(
             self, subscription_id: str, *, limit: int | None = None,
-            offset: int | None = None,
+            cursor: str | None = None, offset: int | None = None,
     ) -> SubscriptionEventList:
         return await self._request(
             "GET", f"/v1/subscriptions/{_segment(subscription_id)}/events",
-            params={"limit": limit, "offset": offset},
+            params={"limit": limit, "cursor": cursor, "offset": offset},
         )
 
     async def get_event(self, event_id: str) -> SubscriptionEvent:

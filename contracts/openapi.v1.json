@@ -18,7 +18,7 @@
           },
           "country_code": {
             "default": "DE",
-            "description": "ISO 3166-1 alpha-2 country code. Defaults to `DE`.",
+            "description": "ISO 3166-1 alpha-2 country code of the address: `DE` or `CH`.",
             "title": "Country Code",
             "type": "string"
           },
@@ -31,7 +31,7 @@
                 "type": "null"
               }
             ],
-            "description": "German federal state (Bundesland).",
+            "description": "State the address lies in: the Bundesland for a German address, the canton (official name, e.g. `Zug`, `Genève`) for a Swiss one. Read from the address itself, so it can differ from the canton of a Swiss company's register office (`register_canton`). `null` when the address does not determine it.",
             "title": "Federal State"
           },
           "formatted_display": {
@@ -117,9 +117,86 @@
         "title": "Address",
         "type": "object"
       },
-      "AiInsightsBlock": {
-        "description": "AI-generated insights. Populated only when `expand=ai_insights`.",
+      "AddressEntry": {
+        "description": "A business address recorded by one entry.",
         "properties": {
+          "address": {
+            "$ref": "#/components/schemas/Address",
+            "description": "Business address (Geschäftsanschrift) as of this entry."
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "address_entry",
+            "default": "address_entry",
+            "description": "Discriminator. Always `address_entry`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address"
+        ],
+        "title": "AddressEntry",
+        "type": "object"
+      },
+      "AiInsightsBlock": {
+        "description": "AI-generated insights, derived from one filed annual report.",
+        "properties": {
+          "based_on_fiscal_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fiscal year of the filing the insights were generated from. Compare it with `financial_summary.latest_fiscal_year`: an outlook written from an older filing describes that year's view.",
+            "title": "Based On Fiscal Year"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the insights were generated (UTC).",
+            "title": "Generated At"
+          },
           "object": {
             "const": "ai_insights",
             "default": "ai_insights",
@@ -153,11 +230,96 @@
         "title": "AiInsightsBlock",
         "type": "object"
       },
+      "ArticlesEntry": {
+        "description": "Creation or amendment of the articles (Satzung / Gesellschaftsvertrag / Statut).",
+        "properties": {
+          "change": {
+            "description": "`created`: the original document; `amended`: a later change.",
+            "enum": [
+              "created",
+              "amended"
+            ],
+            "title": "Change",
+            "type": "string"
+          },
+          "document_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the document or resolution.",
+            "title": "Document Date"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Document as filed: `Satzung`, `Gesellschaftsvertrag` or `Statut`.",
+            "examples": [
+              "Gesellschaftsvertrag"
+            ],
+            "title": "Document Type"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "articles_entry",
+            "default": "articles_entry",
+            "description": "Discriminator. Always `articles_entry`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "title": "ArticlesEntry",
+        "type": "object"
+      },
       "AutocompleteHit": {
         "description": "One autocomplete suggestion.",
         "properties": {
           "display_name": {
-            "description": "Best human-readable name to render in the suggestion list.",
+            "description": "The legal name without its legal-form suffix and status markers (`VOLKSWAGEN AKTIENGESELLSCHAFT` → `VOLKSWAGEN`, `Siemens Suisse SA` → `Siemens Suisse`). Identical for the same company on every endpoint.",
             "title": "Display Name",
             "type": "string"
           },
@@ -178,6 +340,21 @@
             "title": "Object",
             "type": "string"
           },
+          "register_canton": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "examples": [
+              "VD"
+            ],
+            "title": "Register Canton"
+          },
           "register_court": {
             "anyOf": [
               {
@@ -187,7 +364,7 @@
                 "type": "null"
               }
             ],
-            "description": "Name of the registering court (Registergericht).",
+            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -214,8 +391,23 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
             "title": "Register Type"
+          },
+          "uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "examples": [
+              "CHE-105.909.036"
+            ],
+            "title": "Uid"
           }
         },
         "required": [
@@ -378,6 +570,290 @@
         "title": "BilanzAttachment",
         "type": "object"
       },
+      "BoardChange": {
+        "description": "One appointment, departure or correction of an officer or limited partner.",
+        "properties": {
+          "change": {
+            "description": "`updated`: the entry corrected the member's data (Geändert, nun).",
+            "enum": [
+              "appointed",
+              "departed",
+              "updated"
+            ],
+            "title": "Change",
+            "type": "string"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "board_change",
+            "default": "board_change",
+            "description": "Discriminator. Always `board_change`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Organisation, when applicable."
+          },
+          "person": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Natural person, when applicable."
+          },
+          "representation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoardRepresentation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Representation power, when the entry states it."
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Role as filed.",
+            "examples": [
+              "Geschäftsführer"
+            ],
+            "title": "Role"
+          }
+        },
+        "required": [
+          "change"
+        ],
+        "title": "BoardChange",
+        "type": "object"
+      },
+      "BoardMember": {
+        "description": "A current officer, from the replay of every appointment and departure.",
+        "properties": {
+          "appointed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the entry that first records this member in the role. For a company whose extract starts with a transfer this is the transfer date, not necessarily the appointment.",
+            "title": "Appointed Date"
+          },
+          "object": {
+            "const": "board_member",
+            "default": "board_member",
+            "description": "Discriminator. Always `board_member`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Organisation holding the role, when applicable."
+          },
+          "person": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Natural person, when applicable."
+          },
+          "representation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BoardRepresentation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Representation power, when the entry states it."
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Role as filed.",
+            "examples": [
+              "Vorstand"
+            ],
+            "title": "Role"
+          }
+        },
+        "title": "BoardMember",
+        "type": "object"
+      },
+      "BoardRepresentation": {
+        "description": "How a board member may represent the company, as filed.",
+        "properties": {
+          "excluded": {
+            "default": false,
+            "description": "Excluded from representation.",
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "exempt_from_self_dealing_ban": {
+            "default": false,
+            "description": "Released from the restrictions of § 181 BGB.",
+            "title": "Exempt From Self Dealing Ban",
+            "type": "boolean"
+          },
+          "joint": {
+            "default": false,
+            "description": "Represents jointly with another officer or Prokurist.",
+            "title": "Joint",
+            "type": "boolean"
+          },
+          "joint_with": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who the joint representation is with, when the entry names it.",
+            "title": "Joint With"
+          },
+          "object": {
+            "const": "board_representation",
+            "default": "board_representation",
+            "description": "Discriminator. Always `board_representation`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "sole": {
+            "default": false,
+            "description": "Authorised to represent the company alone.",
+            "title": "Sole",
+            "type": "boolean"
+          }
+        },
+        "title": "BoardRepresentation",
+        "type": "object"
+      },
+      "BranchEntry": {
+        "description": "The branch offices listed by one entry.",
+        "properties": {
+          "branches": {
+            "description": "Branches (Zweigniederlassungen) as listed by this entry.",
+            "items": {
+              "$ref": "#/components/schemas/HistoryBranch"
+            },
+            "title": "Branches",
+            "type": "array"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "branch_entry",
+            "default": "branch_entry",
+            "description": "Discriminator. Always `branch_entry`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "title": "BranchEntry",
+        "type": "object"
+      },
       "Bundesland": {
         "enum": [
           "Baden-Württemberg",
@@ -516,6 +992,84 @@
         "title": "BusinessBranch",
         "type": "object"
       },
+      "CapitalEntry": {
+        "description": "A share-capital figure recorded by one entry.",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/Money",
+            "description": "Share capital (Stamm-/Grundkapital) after this entry."
+          },
+          "change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Difference to the previous capital entry. `null` for the first."
+          },
+          "change_type": {
+            "description": "How the capital changed, as the entry describes it.",
+            "enum": [
+              "initial",
+              "cash_increase",
+              "contribution_in_kind",
+              "from_authorized_capital",
+              "from_conditional_capital",
+              "decrease",
+              "unchanged"
+            ],
+            "title": "Change Type",
+            "type": "string"
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "capital_entry",
+            "default": "capital_entry",
+            "description": "Discriminator. Always `capital_entry`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "change_type"
+        ],
+        "title": "CapitalEntry",
+        "type": "object"
+      },
       "CompanyDetail": {
         "description": "Hero detail profile returned by `GET /v1/companies/{eu_id}`.\n\nEvery block is populated on every response — no `expand[]` opt-in.\nHeavy historic data (financial history, employee history, parent/\nsubsidiary relationships) lives on the separate\n`GET /v1/companies/{eu_id}/financials` endpoint.",
         "properties": {
@@ -569,7 +1123,7 @@
             "description": "Contact and web presence (domain, logo, social profiles, LinkedIn enrichment)."
           },
           "display_name": {
-            "description": "Best human-readable name to use in UIs.",
+            "description": "The legal name without its legal-form suffix and status markers (`VOLKSWAGEN AKTIENGESELLSCHAFT` → `VOLKSWAGEN`, `Siemens Suisse SA` → `Siemens Suisse`). Identical for the same company on every endpoint.",
             "title": "Display Name",
             "type": "string"
           },
@@ -668,6 +1222,12 @@
             ],
             "description": "Insolvency, Auflösung and Liquidation snapshot. `null` when the company has no such event on record and is not dissolved."
           },
+          "is_branch": {
+            "default": false,
+            "description": "`true` when this register entry is a branch office (Zweigniederlassung, succursale) of a company registered elsewhere, not a company of its own — a foreign company's German branch, or a Swiss branch office, which has its own UID.",
+            "title": "Is Branch",
+            "type": "boolean"
+          },
           "latest_register_entry_date": {
             "anyOf": [
               {
@@ -690,7 +1250,7 @@
                 "type": "null"
               }
             ],
-            "description": "German legal-form short name (Rechtsform), e.g. `GmbH`, `AG`, `KG`.",
+            "description": "Legal-form short name (Rechtsform), e.g. `GmbH`, `AG`, `KG`. Swiss legal forms carry a `(CH)` suffix, e.g. `AG (CH)`.",
             "examples": [
               "GmbH"
             ],
@@ -707,6 +1267,19 @@
             ],
             "description": "Full legal name as filed.",
             "title": "Legal Name"
+          },
+          "legal_status": {
+            "default": "active",
+            "description": "Derived lifecycle status, resolved from the merged Strukturierte-Inhalte, Chronologisches-Datenblatt and Insolvenzbekanntmachungen timelines — the most recent event wins regardless of which source recorded it.\n\n`deleted` — company has been removed from the German registries.\n`insolvent` — insolvency proceedings are open or preliminary measures are in force.\n`in_liquidation` — the company is dissolved (Auflösung, whether by shareholder resolution or as a consequence of insolvency) and a Liquidator is in office.\n`dissolved` — dissolved with no Liquidator in office, or an insolvency proceeding that has been lifted (Aufhebung des Verfahrens).\n`active` — default for everything else.",
+            "enum": [
+              "active",
+              "in_liquidation",
+              "insolvent",
+              "dissolved",
+              "deleted"
+            ],
+            "title": "Legal Status",
+            "type": "string"
           },
           "lei_graph": {
             "anyOf": [
@@ -734,6 +1307,21 @@
             "title": "Object",
             "type": "string"
           },
+          "register_canton": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "examples": [
+              "VD"
+            ],
+            "title": "Register Canton"
+          },
           "register_court": {
             "anyOf": [
               {
@@ -743,7 +1331,7 @@
                 "type": "null"
               }
             ],
-            "description": "Name of the registering court (Registergericht).",
+            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -770,7 +1358,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
             "title": "Register Type"
           },
           "registered_seat": {
@@ -794,20 +1382,22 @@
                 "type": "null"
               }
             ],
-            "description": "Currently registered share capital (Stammkapital/Grundkapital)."
+            "description": "Currently registered share capital (Stammkapital / Grundkapital), from the structured register extract or, where that carries none, the latest capital entry in the chronological one. `null` when the register states none — partnerships have no share capital."
           },
-          "status": {
-            "default": "active",
-            "description": "Derived lifecycle status, resolved from the merged Strukturierte-Inhalte, Chronologisches-Datenblatt and Insolvenzbekanntmachungen timelines — the most recent event wins regardless of which source recorded it.\n\n`deleted` — company has been removed from the German registries.\n`insolvent` — insolvency proceedings are open or preliminary measures are in force.\n`in_liquidation` — the company is dissolved (Auflösung, whether by shareholder resolution or as a consequence of insolvency) and a Liquidator is in office.\n`dissolved` — dissolved with no Liquidator in office, or an insolvency proceeding that has been lifted (Aufhebung des Verfahrens).\n`active` — default for everything else.",
-            "enum": [
-              "active",
-              "in_liquidation",
-              "insolvent",
-              "dissolved",
-              "deleted"
+          "uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Status",
-            "type": "string"
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "examples": [
+              "CHE-105.909.036"
+            ],
+            "title": "Uid"
           },
           "ust_id_nr": {
             "anyOf": [
@@ -861,6 +1451,12 @@
             "description": "English display name composed as `\"<type label> from <date>\"` (e.g. `Shareholder List from 2026-02-17`).",
             "title": "File Name En",
             "type": "string"
+          },
+          "is_outdated": {
+            "default": false,
+            "description": "`true` for a register extract (`register_extract_current` / `register_extract_chronological`) older than the company's latest register entry — the extract predates a change the register has since recorded. Pass `fetch_realtime=true` to `/documents/download` for a fresh one. Always `false` for the other document types.",
+            "title": "Is Outdated",
+            "type": "boolean"
           },
           "object": {
             "const": "company_document",
@@ -957,6 +1553,12 @@
             "$ref": "#/components/schemas/Freshness",
             "description": "How current the served file is. `last_checked_at` mirrors the parent `updated_at` (the moment firmendata last fetched this document); `realtime_fetching_status` reports the outcome of the realtime attempt for this request — `download_url` still points at the most recent file on record regardless of that outcome."
           },
+          "is_outdated": {
+            "default": false,
+            "description": "`true` for a register extract (`register_extract_current` / `register_extract_chronological`) older than the company's latest register entry — the extract predates a change the register has since recorded. Pass `fetch_realtime=true` to `/documents/download` for a fresh one. Always `false` for the other document types.",
+            "title": "Is Outdated",
+            "type": "boolean"
+          },
           "object": {
             "const": "company_document_download",
             "default": "company_document_download",
@@ -1029,6 +1631,11 @@
             "$ref": "#/components/schemas/EmployeeHistoryBlock",
             "description": "Per-year employee headcount (total / full-time / part-time) sourced from annual Jahresabschluss filings."
           },
+          "eu_id": {
+            "description": "firmendata company identifier.",
+            "title": "Eu Id",
+            "type": "string"
+          },
           "financial_publications": {
             "description": "Filed annual financial statements (Bilanz files) available for this company: Jahresabschluss, Konzernabschluss, or combined. Sorted by `published_at` descending. Attachments reference the filed PDF — downloads are not exposed in v1.",
             "items": {
@@ -1043,12 +1650,7 @@
           },
           "history": {
             "$ref": "#/components/schemas/FinancialHistoryBlock",
-            "description": "Multi-year history: annual top-line metrics plus structured profit-and-loss, assets, and liabilities-and-equity rows from the filings. AI-reconstructed P&L is included for small-company filings that lack a structured statement."
-          },
-          "id": {
-            "description": "firmendata company identifier.",
-            "title": "Id",
-            "type": "string"
+            "description": "Multi-year history: annual top-line metrics, plus — with `include=line_items` — the structured profit-and-loss, assets, and liabilities-and-equity rows from the filings. AI-reconstructed P&L is included for small-company filings that lack a structured statement."
           },
           "object": {
             "const": "company_financials",
@@ -1081,7 +1683,7 @@
           }
         },
         "required": [
-          "id",
+          "eu_id",
           "freshness",
           "history",
           "employee_history"
@@ -1090,17 +1692,88 @@
         "type": "object"
       },
       "CompanyHistory": {
-        "description": "Response model for `GET /v1/companies/{eu_id}/history`.\n\nAggregated view of every change ever recorded against a company in\nthe Handelsregister, grouped by what was changed (firma, sitz,\nkapital, board, etc.). Lists are oldest-first within each group.",
+        "description": "Response model for `GET /v1/companies/{eu_id}/history`.\n\nEverything recorded against a company in the chronological register\nextract (Chronologischer Abdruck), grouped by what changed. Timelines are\noldest first; dates are ISO 8601 and people use the same `person` shape\nas the company detail.",
         "properties": {
-          "board_members": {
-            "description": "Board-member appointments and removals (Geschäftsführer, Vorstand, Prokuristen, Aufsichtsrat). Each entry is a single change — to derive the current board, see `current_board`.",
+          "articles_of_association": {
+            "description": "Creation and amendments of the constitutional document — Satzung, Gesellschaftsvertrag or Statut depending on legal form.",
             "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
+              "$ref": "#/components/schemas/ArticlesEntry"
             },
-            "title": "Board Members",
+            "title": "Articles Of Association",
             "type": "array"
           },
-          "company_status": {
+          "board_changes": {
+            "description": "Every appointment, departure and correction of an officer (Geschäftsführer, Vorstand, Liquidator, persönlich haftender Gesellschafter) or limited partner.",
+            "items": {
+              "$ref": "#/components/schemas/BoardChange"
+            },
+            "title": "Board Changes",
+            "type": "array"
+          },
+          "branches": {
+            "description": "Branch offices, as listed by each entry that names them.",
+            "items": {
+              "$ref": "#/components/schemas/BranchEntry"
+            },
+            "title": "Branches",
+            "type": "array"
+          },
+          "business_addresses": {
+            "description": "Business addresses over time.",
+            "items": {
+              "$ref": "#/components/schemas/AddressEntry"
+            },
+            "title": "Business Addresses",
+            "type": "array"
+          },
+          "business_purposes": {
+            "description": "Business purposes over time.",
+            "items": {
+              "$ref": "#/components/schemas/PurposeEntry"
+            },
+            "title": "Business Purposes",
+            "type": "array"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/HistoryCoverage"
+          },
+          "current_board": {
+            "description": "Officers in office now, from replaying every appointment, departure and correction in `board_changes`.",
+            "items": {
+              "$ref": "#/components/schemas/BoardMember"
+            },
+            "title": "Current Board",
+            "type": "array"
+          },
+          "eu_id": {
+            "description": "firmendata company identifier.",
+            "title": "Eu Id",
+            "type": "string"
+          },
+          "first_entry": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FirstRegisterEntry"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The earliest entry of the extract, and whether it is the founding."
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness",
+            "description": "How current the chronological register history is. `last_checked_at` is when the company's chronological extract was last fetched; `realtime_fetching_status` reports the outcome of the realtime attempt for this request."
+          },
+          "legal_forms": {
+            "description": "Legal-form changes over time.",
+            "items": {
+              "$ref": "#/components/schemas/LegalFormEntry"
+            },
+            "title": "Legal Forms",
+            "type": "array"
+          },
+          "legal_status": {
             "anyOf": [
               {
                 "type": "string"
@@ -1109,77 +1782,11 @@
                 "type": "null"
               }
             ],
-            "description": "Current operating status derived from the timeline (`active`, `dissolved`, `insolvent`, …). `null` when no definitive state can be inferred from the history.",
-            "title": "Company Status"
-          },
-          "current_board": {
-            "description": "Snapshot of currently-active board members, derived by walking every appointment / removal in the timeline. Each item carries `name`, `role`, and any qualifying attributes (e.g. `sole_representation`).",
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Current Board",
-            "type": "array"
-          },
-          "erste_eintragung": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/RegisterHistoryEvent"
-              },
-              {
-                "type": "null"
-              }
+            "description": "Current legal status derived from the timeline (`active`, `dissolved`, `in_liquidation`, `insolvent`). `null` when the history is not available.",
+            "examples": [
+              "active"
             ],
-            "description": "First-ever register entry (founding entry)."
-          },
-          "eu_id": {
-            "description": "firmendata company identifier.",
-            "title": "Eu Id",
-            "type": "string"
-          },
-          "firma": {
-            "description": "Company-name (firma) changes over time.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Firma",
-            "type": "array"
-          },
-          "freshness": {
-            "$ref": "#/components/schemas/Freshness",
-            "description": "How current the chronological register history is. `last_checked_at` is the timestamp at which the company's Chronologischer Datenauszug (CD) was last successfully fetched; `realtime_fetching_status` reports the outcome of the realtime attempt for this request."
-          },
-          "gegenstand": {
-            "description": "Business-purpose (Unternehmensgegenstand) changes over time.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Gegenstand",
-            "type": "array"
-          },
-          "geschaeftsanschrift": {
-            "description": "Business-address (Geschäftsanschrift) changes over time.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Geschaeftsanschrift",
-            "type": "array"
-          },
-          "kapital": {
-            "description": "Share-capital (Stamm-/Grundkapital) changes over time.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Kapital",
-            "type": "array"
-          },
-          "kommanditisten": {
-            "description": "Limited-partner (Kommanditist) changes — only meaningful for KG-shaped legal forms.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Kommanditisten",
-            "type": "array"
+            "title": "Legal Status"
           },
           "legal_status_events": {
             "description": "Insolvency, Auflösung and Liquidation events, newest first, merged and deduplicated across all three registries. Empty for a company that has never been in insolvency or liquidation.",
@@ -1189,6 +1796,22 @@
             "title": "Legal Status Events",
             "type": "array"
           },
+          "limited_partners": {
+            "description": "Current limited partners (Kommanditisten). Only KG-shaped legal forms have them.",
+            "items": {
+              "$ref": "#/components/schemas/LimitedPartner"
+            },
+            "title": "Limited Partners",
+            "type": "array"
+          },
+          "names": {
+            "description": "Company names over time.",
+            "items": {
+              "$ref": "#/components/schemas/NameEntry"
+            },
+            "title": "Names",
+            "type": "array"
+          },
           "object": {
             "const": "company_history",
             "default": "company_history",
@@ -1196,41 +1819,26 @@
             "title": "Object",
             "type": "string"
           },
-          "rechtsform": {
-            "description": "Legal-form (Rechtsform) changes over time.",
+          "seats": {
+            "description": "Registered seats over time.",
             "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
+              "$ref": "#/components/schemas/SeatEntry"
             },
-            "title": "Rechtsform",
+            "title": "Seats",
             "type": "array"
           },
-          "satzung_events": {
-            "description": "Articles-of-association amendment entries — covers any change to the company's constitutional document, called Gesellschaftsvertrag / Satzung / Statut in German depending on legal form. The field name `satzung_events` uses the most common German short form.",
+          "share_capital": {
+            "description": "Share capital over time.",
             "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
+              "$ref": "#/components/schemas/CapitalEntry"
             },
-            "title": "Satzung Events",
-            "type": "array"
-          },
-          "sitz": {
-            "description": "Registered seat (Sitz) changes over time.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Sitz",
-            "type": "array"
-          },
-          "zweigniederlassungen": {
-            "description": "Branch-office (Zweigniederlassung) openings/closings.",
-            "items": {
-              "$ref": "#/components/schemas/RegisterHistoryEvent"
-            },
-            "title": "Zweigniederlassungen",
+            "title": "Share Capital",
             "type": "array"
           }
         },
         "required": [
           "eu_id",
+          "coverage",
           "freshness"
         ],
         "title": "CompanyHistory",
@@ -1438,7 +2046,7 @@
         "type": "object"
       },
       "EmployeeHistoryBlock": {
-        "description": "Multi-year employee history. Populated only when `expand=employee_history`.",
+        "description": "Multi-year employee history.",
         "properties": {
           "object": {
             "const": "employee_history",
@@ -1518,10 +2126,10 @@
         "type": "object"
       },
       "FinancialHistoryBlock": {
-        "description": "Multi-year financial history. Populated only when `expand=financial_history`.",
+        "description": "Multi-year financial history.\n\n`metrics` is always populated. The three line-item arrays are opt-in:\nthey are empty unless the request passes `include=line_items`.",
         "properties": {
           "assets": {
-            "description": "Filed assets-side rows.",
+            "description": "Filed assets-side rows. Empty unless `include=line_items`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -1529,7 +2137,7 @@
             "type": "array"
           },
           "liabilities_and_equity": {
-            "description": "Filed liabilities-and-equity rows.",
+            "description": "Filed liabilities-and-equity rows. Empty unless `include=line_items`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -1552,7 +2160,7 @@
             "type": "string"
           },
           "profit_and_loss": {
-            "description": "Filed profit-and-loss statement rows.",
+            "description": "Filed profit-and-loss statement rows. Empty unless `include=line_items`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -1620,6 +2228,17 @@
             "description": "Discriminator. Always `financial_metric`.",
             "title": "Object",
             "type": "string"
+          },
+          "other_operating_income": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Other operating income — `sonstige betriebliche Erträge` plus interest and commission income. Reported separately from `revenue`, which counts only Umsatzerlöse."
           },
           "profit": {
             "anyOf": [
@@ -1889,8 +2508,20 @@
                 "type": "null"
               }
             ],
-            "description": "Latest reported employee count.",
+            "description": "Employee count from the most recent year that reports one — see `latest_employee_count_year`.",
             "title": "Latest Employee Count"
+          },
+          "latest_employee_count_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Year `latest_employee_count` is for.",
+            "title": "Latest Employee Count Year"
           },
           "latest_fiscal_year": {
             "anyOf": [
@@ -1904,6 +2535,52 @@
             "description": "Fiscal year of the latest reported figures.",
             "title": "Latest Fiscal Year"
           },
+          "latest_profit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annual profit (Jahresüberschuss / Bilanzgewinn) from the most recent fiscal year that reports one — see `latest_profit_year`."
+          },
+          "latest_profit_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fiscal year `latest_profit` is for.",
+            "title": "Latest Profit Year"
+          },
+          "latest_revenue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Revenue (Umsatzerlöse) from the most recent fiscal year that reports one — see `latest_revenue_year`. Small and medium-sized companies file no profit-and-loss statement, so this is often `null`."
+          },
+          "latest_revenue_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fiscal year `latest_revenue` is for.",
+            "title": "Latest Revenue Year"
+          },
           "latest_total_assets": {
             "anyOf": [
               {
@@ -1913,7 +2590,7 @@
                 "type": "null"
               }
             ],
-            "description": "Latest reported total assets."
+            "description": "Total assets reported for `latest_fiscal_year`."
           },
           "latest_total_liabilities_and_equity": {
             "anyOf": [
@@ -1924,7 +2601,7 @@
                 "type": "null"
               }
             ],
-            "description": "Latest reported total liabilities and equity."
+            "description": "Total liabilities and equity reported for `latest_fiscal_year`."
           },
           "object": {
             "const": "financial_summary",
@@ -1935,6 +2612,110 @@
           }
         },
         "title": "FinancialSummaryBlock",
+        "type": "object"
+      },
+      "FirstRegisterEntry": {
+        "description": "The earliest entry of the chronological extract, and what it records.",
+        "properties": {
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "first_registered_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date the company was first entered in a German register (Tag der ersten Eintragung). Earlier than `entry_date` when the extract starts after a court transfer or a digitisation.",
+            "examples": [
+              "1961-04-27"
+            ],
+            "title": "First Registered Date"
+          },
+          "founding_document_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of that document.",
+            "examples": [
+              "1960-07-06"
+            ],
+            "title": "Founding Document Date"
+          },
+          "founding_document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Constitutional document as filed: `Satzung`, `Gesellschaftsvertrag` or `Statut`.",
+            "examples": [
+              "Satzung"
+            ],
+            "title": "Founding Document Type"
+          },
+          "object": {
+            "const": "first_register_entry",
+            "default": "first_register_entry",
+            "description": "Discriminator. Always `first_register_entry`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "origin": {
+            "default": "founding",
+            "description": "What the first entry records. `founding`: the company's registration. `transfer`: a move from another register court or a digitisation — earlier entries exist elsewhere. `conversion`: the company arose from an Umwandlung (Formwechsel, Verschmelzung, Spaltung). `charter_predates`: the entry cites an articles of association or contract more than a year older than itself. Only `founding` supports the `founder_profile` verdicts; for the others they are `null`.",
+            "enum": [
+              "founding",
+              "transfer",
+              "conversion",
+              "charter_predates"
+            ],
+            "title": "Origin",
+            "type": "string"
+          }
+        },
+        "title": "FirstRegisterEntry",
         "type": "object"
       },
       "FounderProfileBlock": {
@@ -2034,7 +2815,7 @@
                 "type": "null"
               }
             ],
-            "description": "Whether someone holding a role at first registration is still in office. `null` when the chronological extract is missing, or begins with a transfer from another register court — its first entry then records the move, not the founding.",
+            "description": "Whether someone holding a role at first registration is still in office. `null` when the chronological extract is missing or its first entry is not the founding — a transfer from another register court, an Umwandlung (Formwechsel, Verschmelzung, Spaltung), or an entry citing a far older charter. `founders` is then empty too: the officers on that day are not founders.",
             "title": "Founder Led"
           },
           "founder_led_confidence": {
@@ -2127,13 +2908,17 @@
           "entry_date": {
             "anyOf": [
               {
+                "format": "date",
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Date of the first register entry, `DD.MM.YYYY`.",
+            "description": "Date of the first register entry.",
+            "examples": [
+              "2006-09-20"
+            ],
             "title": "Entry Date"
           },
           "first_name": {
@@ -2248,6 +3033,130 @@
           "realtime_fetching_status"
         ],
         "title": "Freshness",
+        "type": "object"
+      },
+      "HistoryBranch": {
+        "description": "One branch office (Zweigniederlassung) as listed by an entry.",
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch address as filed.",
+            "title": "Address"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch seat.",
+            "title": "City"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch name as filed.",
+            "title": "Name"
+          },
+          "object": {
+            "const": "branch",
+            "default": "branch",
+            "description": "Discriminator. Always `branch`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "register_court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Court registering the branch, if filed.",
+            "title": "Register Court"
+          },
+          "register_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Register number of the branch entry.",
+            "title": "Register Number"
+          },
+          "register_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Register type of the branch entry.",
+            "title": "Register Type"
+          }
+        },
+        "title": "HistoryBranch",
+        "type": "object"
+      },
+      "HistoryCoverage": {
+        "description": "Whether a chronological register history exists for this company.",
+        "properties": {
+          "object": {
+            "const": "history_coverage",
+            "default": "history_coverage",
+            "description": "Discriminator. Always `history_coverage`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Customer-safe explanation when `status` is `not_available`.",
+            "title": "Reason"
+          },
+          "status": {
+            "description": "`available`: the chronological register extract was parsed and the timelines below are populated. `not_available`: no extract exists for this company — the Swiss commercial register publishes none, and for a German company none has been retrieved yet (`fetch_realtime=true` retrieves it). Every timeline is then empty and the call is not charged.",
+            "enum": [
+              "available",
+              "not_available"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HistoryCoverage",
         "type": "object"
       },
       "IndustryBlock": {
@@ -2399,6 +3308,74 @@
           }
         },
         "title": "InsolvencyBlock",
+        "type": "object"
+      },
+      "LegalFormEntry": {
+        "description": "A change of legal form.",
+        "properties": {
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "legal_form": {
+            "description": "Legal form as filed.",
+            "examples": [
+              "Aktiengesellschaft"
+            ],
+            "title": "Legal Form",
+            "type": "string"
+          },
+          "object": {
+            "const": "legal_form_entry",
+            "default": "legal_form_entry",
+            "description": "Discriminator. Always `legal_form_entry`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "previous_legal_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legal form before this entry. `null` for the first.",
+            "title": "Previous Legal Form"
+          }
+        },
+        "required": [
+          "legal_form"
+        ],
+        "title": "LegalFormEntry",
         "type": "object"
       },
       "LegalStatus": {
@@ -2558,15 +3535,21 @@
         "type": "object"
       },
       "LeiGraphBlock": {
-        "description": "LEI-based ownership graph. Populated only when `expand=lei_graph`.",
+        "description": "LEI-based ownership graph: the direct parent and direct children.",
         "properties": {
           "direct_children": {
-            "description": "Direct children in the LEI graph.",
+            "description": "Direct children in the LEI graph, ordered by legal name. At most 25 — `direct_children_total` says how many there are.",
             "items": {
               "$ref": "#/components/schemas/LeiRelative"
             },
             "title": "Direct Children",
             "type": "array"
+          },
+          "direct_children_total": {
+            "default": 0,
+            "description": "Number of direct children in the LEI graph, including any beyond the 25 listed in `direct_children`.",
+            "title": "Direct Children Total",
+            "type": "integer"
           },
           "direct_parent": {
             "anyOf": [
@@ -2729,6 +3712,96 @@
         "title": "LeiRelative",
         "type": "object"
       },
+      "LimitedPartner": {
+        "description": "A current limited partner (Kommanditist) and the contribution filed.\n\n`entry_date` / `entry_number` refer to the partner's most recent change.",
+        "properties": {
+          "contribution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Registered liability contribution (Hafteinlage)."
+          },
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "limited_partner",
+            "default": "limited_partner",
+            "description": "Discriminator. Always `limited_partner`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrganizationRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Organisation, when applicable."
+          },
+          "person": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Natural person, when applicable."
+          },
+          "share_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of all registered contributions, in percent.",
+            "title": "Share Percent"
+          }
+        },
+        "title": "LimitedPartner",
+        "type": "object"
+      },
       "LocalizedText": {
         "description": "A piece of text rendered in German and/or English.",
         "properties": {
@@ -2764,16 +3837,23 @@
             "type": "string"
           },
           "translation_source": {
-            "default": "original",
-            "description": "Provenance of the rendering. `original`: the value as filed; `human`: human translation; `machine`: machine translation; `passthrough`: identical to the source language.",
-            "enum": [
-              "original",
-              "human",
-              "machine",
-              "passthrough"
+            "anyOf": [
+              {
+                "enum": [
+                  "original",
+                  "human",
+                  "machine",
+                  "passthrough"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "Translation Source",
-            "type": "string"
+            "default": "original",
+            "description": "Provenance of the English rendering. `original`: the value as filed; `human`: human translation; `machine`: machine translation; `passthrough`: identical to the source language. `null` when there is no English rendering (`en` is `null`).",
+            "title": "Translation Source"
           }
         },
         "title": "LocalizedText",
@@ -2884,6 +3964,59 @@
           }
         },
         "title": "Money",
+        "type": "object"
+      },
+      "NameEntry": {
+        "description": "A company name (Firma) registered by one entry.",
+        "properties": {
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "name": {
+            "description": "Company name (Firma) as registered by this entry.",
+            "title": "Name",
+            "type": "string"
+          },
+          "object": {
+            "const": "name_entry",
+            "default": "name_entry",
+            "description": "Discriminator. Always `name_entry`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "NameEntry",
         "type": "object"
       },
       "NotificationCadence": {
@@ -3079,7 +4212,7 @@
                 "type": "null"
               }
             ],
-            "description": "Approximate total result count. Capped at 10,000 for `/companies/search`; exact for other list endpoints.",
+            "description": "Approximate total result count. Capped at 10,000 for `/companies/search`; exact for the lists endpoints; `null` for the subscription listings, which do not count.",
             "title": "Total Approx"
           },
           "total_is_capped": {
@@ -3253,18 +4386,22 @@
             "type": "string"
           },
           "errors": {
-            "description": "Field-level validation failures (only on 422 responses).",
+            "description": "Parameter-level validation failures (only on 422 responses).",
             "items": {
               "properties": {
-                "code": {
-                  "description": "Machine-readable error code.",
+                "message": {
+                  "description": "What is wrong with it.",
                   "type": "string"
                 },
-                "path": {
-                  "description": "Dotted path to the offending field.",
+                "param": {
+                  "description": "Name of the offending parameter (dotted for a nested body field).",
                   "type": "string"
                 }
               },
+              "required": [
+                "param",
+                "message"
+              ],
               "type": "object"
             },
             "nullable": true,
@@ -3276,7 +4413,7 @@
             "type": "string"
           },
           "request_id": {
-            "description": "Echoes the `X-Request-Id` request header, or a server-generated UUID. Use when contacting support.",
+            "description": "Same value as the `X-Request-Id` response header: the one you sent, or a server-generated id. Quote it when contacting support.",
             "type": "string"
           },
           "status": {
@@ -3299,9 +4436,63 @@
         "required": [
           "type",
           "title",
-          "status"
+          "status",
+          "request_id"
         ],
         "title": "Problem",
+        "type": "object"
+      },
+      "PurposeEntry": {
+        "description": "A business purpose recorded by one entry.",
+        "properties": {
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "purpose_entry",
+            "default": "purpose_entry",
+            "description": "Discriminator. Always `purpose_entry`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "purpose": {
+            "description": "Business purpose (Unternehmensgegenstand) as of this entry.",
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose"
+        ],
+        "title": "PurposeEntry",
         "type": "object"
       },
       "Rechtsform": {
@@ -3482,50 +4673,6 @@
         "title": "RegisterCourt",
         "type": "string"
       },
-      "RegisterHistoryEvent": {
-        "description": "One entry in the chronological register timeline.\n\n``entry_date`` is the German DD.MM.YYYY format the registry\npublishes; consumers that want a parsed date should split on\n``\".\"``. ``data`` is the raw aggregated record — its keys depend\non which timeline this event belongs to (firma vs. kapital vs.\nboard, etc.).",
-        "properties": {
-          "data": {
-            "additionalProperties": true,
-            "description": "Aggregated record body. Keys vary by category — e.g. firma events carry `firma`/`prev_firma`; kapital events carry `kapital`/`waehrung`; board events carry `name`/`role`/`action`. See the API guide for the full per-category schema.",
-            "title": "Data",
-            "type": "object"
-          },
-          "entry_date": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Date of the register entry in DD.MM.YYYY (the format the Handelsregister publishes). `null` for entries the parser could not date-stamp.",
-            "title": "Entry Date"
-          },
-          "entry_number": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Numbered position of this entry in the chronological register (laufende Nummer der Eintragung).",
-            "title": "Entry Number"
-          },
-          "object": {
-            "const": "register_history_event",
-            "default": "register_history_event",
-            "description": "Discriminator. Always `register_history_event`.",
-            "title": "Object",
-            "type": "string"
-          }
-        },
-        "title": "RegisterHistoryEvent",
-        "type": "object"
-      },
       "RegisterType": {
         "enum": [
           "HRA",
@@ -3655,7 +4802,7 @@
         "type": "object"
       },
       "RelationshipsBlock": {
-        "description": "Parent + subsidiaries graph. Populated only when `expand=relationships`.",
+        "description": "Parent + subsidiaries reported in consolidated financial filings.",
         "properties": {
           "object": {
             "const": "company_relationships",
@@ -3676,12 +4823,18 @@
             "description": "Reported parent company, when known."
           },
           "subsidiaries": {
-            "description": "Reported subsidiaries.",
+            "description": "Reported subsidiaries, ordered by name. At most 25 — `subsidiaries_total` says how many there are.",
             "items": {
               "$ref": "#/components/schemas/RelatedCompany"
             },
             "title": "Subsidiaries",
             "type": "array"
+          },
+          "subsidiaries_total": {
+            "default": 0,
+            "description": "Number of reported subsidiaries, including any beyond the 25 listed in `subsidiaries`.",
+            "title": "Subsidiaries Total",
+            "type": "integer"
           }
         },
         "title": "RelationshipsBlock",
@@ -3710,7 +4863,7 @@
             "type": "array"
           },
           "display_name": {
-            "description": "Best human-readable name to use in UIs.",
+            "description": "The legal name without its legal-form suffix and status markers (`VOLKSWAGEN AKTIENGESELLSCHAFT` → `VOLKSWAGEN`, `Siemens Suisse SA` → `Siemens Suisse`). Identical for the same company on every endpoint.",
             "title": "Display Name",
             "type": "string"
           },
@@ -3768,6 +4921,12 @@
             "description": "Founding date, when reported.",
             "title": "Founded At"
           },
+          "is_branch": {
+            "default": false,
+            "description": "`true` when this register entry is a branch office (Zweigniederlassung, succursale) of a company registered elsewhere, not a company of its own. Same rule as `CompanyDetail.is_branch`.",
+            "title": "Is Branch",
+            "type": "boolean"
+          },
           "legal_name": {
             "description": "Full legal name as filed.",
             "title": "Legal Name",
@@ -3775,7 +4934,7 @@
           },
           "legal_status": {
             "default": "active",
-            "description": "Lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Same vocabulary as `CompanyDetail.status` and the `legal_status` search filter.",
+            "description": "Lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Same vocabulary as `CompanyDetail.legal_status` and the `legal_status` search filter.",
             "enum": [
               "active",
               "in_liquidation",
@@ -3817,6 +4976,21 @@
             "description": "Fiscal year (`YYYY`) that `profit` is for.",
             "title": "Profit Year"
           },
+          "register_canton": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "examples": [
+              "VD"
+            ],
+            "title": "Register Canton"
+          },
           "register_court": {
             "anyOf": [
               {
@@ -3826,7 +5000,7 @@
                 "type": "null"
               }
             ],
-            "description": "Name of the registering court (Registergericht).",
+            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -3853,7 +5027,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
             "title": "Register Type"
           },
           "revenue": {
@@ -3904,6 +5078,21 @@
             "description": "Fiscal year (`YYYY`) that `total_assets` is for.",
             "title": "Total Assets Year"
           },
+          "uid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "examples": [
+              "CHE-105.909.036"
+            ],
+            "title": "Uid"
+          },
           "website": {
             "anyOf": [
               {
@@ -3939,13 +5128,13 @@
           "execution_time_ms": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Server-side query execution time in milliseconds.",
+            "description": "Server-side query execution time in whole milliseconds.",
             "title": "Execution Time Ms"
           },
           "filters_echo": {
@@ -3971,6 +5160,59 @@
           }
         },
         "title": "SearchResponse",
+        "type": "object"
+      },
+      "SeatEntry": {
+        "description": "A registered seat (Sitz) recorded by one entry.",
+        "properties": {
+          "entry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Date of the register entry. `null` when the entry carries no date.",
+            "examples": [
+              "2021-07-15"
+            ],
+            "title": "Entry Date"
+          },
+          "entry_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Running number of the register entry (laufende Nummer der Eintragung).",
+            "examples": [
+              124
+            ],
+            "title": "Entry Number"
+          },
+          "object": {
+            "const": "seat_entry",
+            "default": "seat_entry",
+            "description": "Discriminator. Always `seat_entry`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "seat": {
+            "description": "Registered seat (Sitz) as of this entry.",
+            "title": "Seat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seat"
+        ],
+        "title": "SeatEntry",
         "type": "object"
       },
       "Shareholder": {
@@ -4846,12 +6088,12 @@
       },
       "SubscriptionEventList": {
         "properties": {
-          "items": {
+          "data": {
             "description": "Events for the subscription, newest first.",
             "items": {
               "$ref": "#/components/schemas/SubscriptionEvent"
             },
-            "title": "Items",
+            "title": "Data",
             "type": "array"
           },
           "object": {
@@ -4860,6 +6102,10 @@
             "description": "Discriminator. Always `list`.",
             "title": "Object",
             "type": "string"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo",
+            "description": "Pagination metadata for this page."
           }
         },
         "title": "SubscriptionEventList",
@@ -5064,12 +6310,12 @@
       },
       "SubscriptionList": {
         "properties": {
-          "items": {
-            "description": "Subscriptions owned by the calling user.",
+          "data": {
+            "description": "Subscriptions owned by the calling user, newest first.",
             "items": {
               "$ref": "#/components/schemas/Subscription"
             },
-            "title": "Items",
+            "title": "Data",
             "type": "array"
           },
           "object": {
@@ -5078,6 +6324,10 @@
             "description": "Discriminator. Always `list`.",
             "title": "Object",
             "type": "string"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationInfo",
+            "description": "Pagination metadata for this page."
           }
         },
         "title": "SubscriptionList",
@@ -5882,7 +7132,10 @@
                 "type": "null"
               }
             ],
-            "description": "Confidence score in [0, 1] for this classification.",
+            "description": "Classifier confidence for this code, from 0 (none) to 1 (certain), rounded to three decimals. Meaningful for ranking a company's candidate codes against each other; not calibrated as a probability.",
+            "examples": [
+              0.157
+            ],
             "title": "Score"
           },
           "section": {
@@ -5919,13 +7172,13 @@
       "email": "info@firmendata.com",
       "name": "firmendata Support"
     },
-    "description": "Programmatic access to German company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/account/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions.** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\n`/companies/search` uses opaque cursor pagination. Pass the\n`pagination.next_cursor` value from a response back as the `cursor`\nquery parameter to fetch the next page. Cursors are not stable across\ndeploys.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, and `request_id` fields;\n422 responses also include a structured `errors[]` array describing each\nfailed field.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. Per-endpoint\ncredit costs, subscription pricing, plan allowances, and rate-limit tiers\nare listed on the [pricing page](https://firmendata.com/en/plans) — the\nsingle source of truth, so this spec links there instead of duplicating\nnumbers that can drift.",
+    "description": "Programmatic access to German company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/account/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions.** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. Do not persist them — they are not\nguaranteed to survive a deploy.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
     "license": {
       "name": "Commercial",
       "url": "https://firmendata.com/en/terms-and-conditions"
     },
     "title": "firmendata Public API",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5987,7 +7240,16 @@
                 }
               }
             },
-            "description": "Suggestion hits ordered by match relevance."
+            "description": "Suggestion hits ordered by match relevance.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -6011,15 +7273,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -6127,7 +7385,7 @@
     },
     "/v1/companies/search": {
       "get": {
-        "description": "Full-text + filter search over the German commercial register. Cursor-paginated,\nup to 50 hits per page. `total_approx` caps at 10,000 — tighten filters for an\nexact count.\n\nEach hit carries identity and registered seat, the register reference (court,\ntype, number), headline financials in EUR, the company's website, and the CPV\ncodes of any EU tenders it won.\n\nFilter values are case-insensitive, several filters accept multiple values, and\nthe financial figures need one caveat before you compute ratios with them — see\nthe **Search** section above for all three.\n\nSetting `fetch_realtime=true` additionally searches the German registers live\nfor `q` (or `company_name`, one of which is then required) and appends any\ncompanies not yet indexed by firmendata to the first page, carrying identity and\nseat only. First page only — omit `cursor`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Full-text + filter search over the German commercial register. Cursor-paginated,\nup to 50 hits per page. `total_approx` caps at 10,000 — tighten filters for an\nexact count.\n\nEach hit carries identity and registered seat, the register reference (court,\ntype, number), headline financials in EUR, the company's website, and the CPV\ncodes of any EU tenders it won.\n\nFilter values are case-insensitive, several filters accept multiple values, and\nthe financial figures need one caveat before you compute ratios with them — see\nthe **Search** section above for all three. Unknown parameters, unknown filter\nvalues and inverted ranges (`*_min` above `*_max`, `founded_from` after\n`founded_to`) are rejected with `422` instead of being ignored.\n\nSetting `fetch_realtime=true` additionally searches the German registers live\nfor `q` (or `company_name`, one of which is then required) and appends any\ncompanies not yet indexed by firmendata to the first page, carrying identity and\nseat only. First page only — omit `cursor`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "searchCompanies",
         "parameters": [
           {
@@ -6215,7 +7473,7 @@
             }
           },
           {
-            "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response to fetch the next page.",
+            "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`.",
             "in": "query",
             "name": "cursor",
             "required": false,
@@ -6229,7 +7487,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response to fetch the next page.",
+              "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`.",
               "title": "Cursor"
             }
           },
@@ -7005,7 +8263,16 @@
                 }
               }
             },
-            "description": "Page of search hits with pagination, echoed filters, and execution time."
+            "description": "Page of search hits with pagination, echoed filters, and execution time.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -7029,15 +8296,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -7144,7 +8407,7 @@
     },
     "/v1/companies/{eu_id}": {
       "get": {
-        "description": "Everything you need to render a company landing page in a single call.\n\n- **Identity & registration** — names, legal form, register entry, founding dates, registered address\n- **Financial headline** — latest-year revenue, profit, assets, liabilities, equity, employee count\n- **Business & industry** — trade description, products, primary WZ 2025 code with the full category tree\n- **Management** — register entry members (managing directors, authorised signatories, supervisory board)\n- **Ownership (LEI graph)** — direct parent and direct subsidiaries via GLEIF\n- **Contact & web presence** — primary domain, Impressum URL, primary email, and discovered social profiles\n- **Insolvency** — current status, court, case number, dissolution flag, most recent event date\n- **AI insights** — company summary, outlook, and risk + opportunity keywords in German and English\n- **Documents** — downloadable register documents available for the company (Aktueller Abdruck, Chronologischer Abdruck, Liste der Gesellschafter, Articles of Association — Gesellschaftsvertrag / Satzung / Statut depending on legal form, Anmeldung, Musterprotokoll); fetch a presigned URL via `/companies/{eu_id}/documents/download`\n\nFor multi-year history, employee time series, relationships, and Bilanz publications, call `/companies/{eu_id}/financials`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Everything you need to render a company landing page in a single call.\n\n- **Identity & registration** — names, legal form, register entry, founding dates, registered address\n- **Financial headline** — latest-year revenue, profit, assets, liabilities, equity, employee count\n- **Business & industry** — trade description, products, primary WZ 2025 code with the full category tree\n- **Management** — register entry members (managing directors, authorised signatories, supervisory board)\n- **Ownership (LEI graph)** — direct parent and the first 25 direct subsidiaries via GLEIF, with the total count\n- **Contact & web presence** — primary domain, Impressum URL, primary email, and discovered social profiles\n- **Insolvency** — current status, court, case number, dissolution flag, most recent event date\n- **AI insights** — company summary, outlook, and risk + opportunity keywords in German and English\n- **Documents** — downloadable register documents available for the company (Aktueller Abdruck, Chronologischer Abdruck, Liste der Gesellschafter, Articles of Association — Gesellschaftsvertrag / Satzung / Statut depending on legal form, Anmeldung, Musterprotokoll); fetch a presigned URL via `/companies/{eu_id}/documents/download`; `is_outdated` flags a register extract older than the latest register entry\n\nFor multi-year history, employee time series, relationships, and Bilanz publications, call `/companies/{eu_id}/financials`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyDetail",
         "parameters": [
           {
@@ -7185,7 +8448,16 @@
                 }
               }
             },
-            "description": "The company's detail profile."
+            "description": "The company's detail profile.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -7227,15 +8499,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -7342,7 +8610,7 @@
     },
     "/v1/companies/{eu_id}/documents/download": {
       "get": {
-        "description": "Resolve one register document for the company and return a\nshort-lived presigned download URL alongside its metadata.\n\n- **`file_type`** — required. One of:\n\n  | `file_type` | German term | Coverage |\n  |---|---|---|\n  | `register_extract_current` | Aktueller Abdruck | Every Handelsregister-registered company. |\n  | `register_extract_chronological` | Chronologischer Abdruck | Every Handelsregister-registered company. |\n  | `shareholder_list` | Liste der Gesellschafter | GmbH and UG (haftungsbeschränkt) only. Companies founded via the simplified procedure (§2 Abs. 1a GmbHG) file no separate Liste — request `model_protocol` instead to download their founding deed. **For parsed cap-table data** (which already auto-falls-back to the Musterprotokoll), call `/companies/{eu_id}/shareholders` rather than this endpoint. |\n  | `articles_of_association` | Gesellschaftsvertrag / Satzung / Statut (the German name varies by legal form: Gesellschaftsvertrag for GmbH/KG/OHG/GbR, Satzung for AG/eG/Verein, Statut for some specific forms) | Most companies — but not those founded via the simplified procedure, which use a Musterprotokoll (`model_protocol`) in place of a constitutional document. |\n  | `company_registration` | Anmeldung | Any newly-registered company. |\n  | `model_protocol` | Musterprotokoll | **Only** companies founded with the simplified procedure under §2 Abs. 1a GmbHG. Legally substitutes for both the constitutional document (Gesellschaftsvertrag / Satzung / Statut) and the Liste der Gesellschafter for those companies — it names the founders and their share allocations directly. |\n\n  Wire values mirror the corresponding `subscription_type` values on\n  `POST /v1/subscriptions`, so a webhook event_type like\n  `articles_of_association.updated` can be passed straight through here\n  to download the file that triggered it.\n- **`file_id`** — optional. When omitted, falls back to the latest published\n  file of the requested type.\n- **`fetch_realtime`** — optional. When `true`, fetch the requested\n  `file_type` from the German registries before resolving the file, so the\n  presigned URL points at the freshest version. Adds upstream latency\n  (typically several seconds). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the response still falls back to the most\n  recent indexed file when realtime fetching fails.\n\nReturns `404` when no matching document is available — the `detail`\nfield distinguishes whether the document is unknown to the German\nregistries, whether the company is no longer present in the registries,\nor whether the registries were unreachable. The `download_url` is valid\nfor 1 day; refetch this endpoint to obtain a new URL when it expires.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Resolve one register document for the company and return a\nshort-lived presigned download URL alongside its metadata.\n\n- **`file_type`** — required. One of:\n\n  | `file_type` | German term | Coverage |\n  |---|---|---|\n  | `register_extract_current` | Aktueller Abdruck | Every Handelsregister-registered company. |\n  | `register_extract_chronological` | Chronologischer Abdruck | Every Handelsregister-registered company. |\n  | `shareholder_list` | Liste der Gesellschafter | GmbH and UG (haftungsbeschränkt) only. Companies founded via the simplified procedure (§2 Abs. 1a GmbHG) file no separate Liste — request `model_protocol` instead to download their founding deed. **For parsed cap-table data** (which already auto-falls-back to the Musterprotokoll), call `/companies/{eu_id}/shareholders` rather than this endpoint. |\n  | `articles_of_association` | Gesellschaftsvertrag / Satzung / Statut (the German name varies by legal form: Gesellschaftsvertrag for GmbH/KG/OHG/GbR, Satzung for AG/eG/Verein, Statut for some specific forms) | Most companies — but not those founded via the simplified procedure, which use a Musterprotokoll (`model_protocol`) in place of a constitutional document. |\n  | `company_registration` | Anmeldung | Any newly-registered company. |\n  | `model_protocol` | Musterprotokoll | **Only** companies founded with the simplified procedure under §2 Abs. 1a GmbHG. Legally substitutes for both the constitutional document (Gesellschaftsvertrag / Satzung / Statut) and the Liste der Gesellschafter for those companies — it names the founders and their share allocations directly. |\n\n  Wire values mirror the corresponding `subscription_type` values on\n  `POST /v1/subscriptions`, so a webhook event_type like\n  `articles_of_association.updated` can be passed straight through here\n  to download the file that triggered it.\n- **`file_id`** — optional. When omitted, falls back to the latest published\n  file of the requested type.\n- **`fetch_realtime`** — optional. When `true`, fetch the requested\n  `file_type` from the German registries before resolving the file, so the\n  presigned URL points at the freshest version. Adds upstream latency\n  (typically several seconds). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the response still falls back to the most\n  recent indexed file when realtime fetching fails.\n\nReturns `404` when no matching document is available — the `detail`\nfield distinguishes whether the document is unknown to the German\nregistries, whether the company is no longer present in the registries,\nor whether the registries were unreachable. A `404` costs no credits. The\n`download_url` is valid for 1 day; refetch this endpoint to obtain a new\nURL when it expires.\n\n`is_outdated` flags a register extract older than the company's latest\nregister entry; request it with `fetch_realtime=true` for a current copy.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "downloadCompanyDocument",
         "parameters": [
           {
@@ -7423,7 +8691,16 @@
                 }
               }
             },
-            "description": "Document metadata plus a 1-day presigned download URL."
+            "description": "Document metadata plus a 1-day presigned download URL.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -7465,15 +8742,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -7580,7 +8853,7 @@
     },
     "/v1/companies/{eu_id}/financials": {
       "get": {
-        "description": "Multi-year financial profile for one company.\n\n- **Aggregated summary** — latest-year revenue, profit, assets, liabilities, and equity\n- **Multi-year history** — annual top-line metrics plus structured P&L, AKTIVA, and PASSIVA rows, with AI-reconstructed P&L for small filings that lack a structured GuV\n- **Employee time series** — total, full-time, and part-time headcount per year\n- **Group relationships** — parent company and known subsidiaries sourced from consolidated filings\n- **Filed Bilanzen** — list of Jahresabschluss and Konzernabschluss filings with type and publication date (PDF downloads are not exposed in v1)\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Multi-year financial profile for one company.\n\n- **Aggregated summary** — latest-year revenue, profit, assets, liabilities, and equity\n- **Multi-year history** — annual top-line metrics; with `include=line_items`, also the structured P&L, AKTIVA, and PASSIVA rows, with AI-reconstructed P&L for small filings that lack a structured GuV\n- **Employee time series** — total, full-time, and part-time headcount per year\n- **Group relationships** — parent company and known subsidiaries sourced from consolidated filings\n- **Filed Bilanzen** — list of Jahresabschluss and Konzernabschluss filings with type and publication date (PDF downloads are not exposed in v1)\n\n`years=N` limits every per-year array — metrics, line items, employee\nseries and filings — to the N most recent fiscal years on record.\n\nA company with no financial data on record at all (no figures, no\nheadcount, no filings, no group relationships) is answered with the empty\nshape and costs no credits.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyFinancials",
         "parameters": [
           {
@@ -7598,6 +8871,55 @@
               "title": "Eu Id",
               "type": "string"
             }
+          },
+          {
+            "description": "Opt-in blocks. `line_items` adds the structured profit-and-loss, assets and liabilities-and-equity rows to `history` — by far the largest part of the response.",
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "const": "line_items",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opt-in blocks. `line_items` adds the structured profit-and-loss, assets and liabilities-and-equity rows to `history` — by far the largest part of the response.",
+              "examples": [
+                [
+                  "line_items"
+                ]
+              ],
+              "title": "Include"
+            }
+          },
+          {
+            "description": "Only the N most recent fiscal years in each per-year array (metrics, line items, employee series, filings). Omit for the full history.",
+            "in": "query",
+            "name": "years",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the N most recent fiscal years in each per-year array (metrics, line items, employee series, filings). Omit for the full history.",
+              "examples": [
+                5
+              ],
+              "title": "Years"
+            }
           }
         ],
         "responses": {
@@ -7609,7 +8931,16 @@
                 }
               }
             },
-            "description": "Aggregated and historic financial data for the company."
+            "description": "Aggregated and historic financial data for the company.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -7651,15 +8982,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -7766,7 +9093,7 @@
     },
     "/v1/companies/{eu_id}/history": {
       "get": {
-        "description": "Aggregated chronological register-entry history for a company.\n\nFor each kind of change — company name (`firma`), seat (`sitz`),\ncapital (`kapital`), board members, business purpose, etc. — the\nendpoint returns the full timeline of entries that affected it.\n`current_board` is a derived snapshot of who currently sits on the\nmanagement board.\n\n- **`fetch_realtime`** — optional. When `true`, refresh the\n  underlying register history from the German registries before\n  responding. Adds upstream latency (typically several seconds).\n  Failures are surfaced via `freshness.realtime_fetching_status`; the response\n  still falls back to the most recent indexed data when a refresh\n  fails.\n\nA 404 is returned when no chronological register history has ever\nbeen recorded for this company — some Vereine and Genossenschaften\nfall outside the chronological-register coverage at Handelsregister.\nThe same data backs the `history` webhook subscription type, so the\nshape returned here is exactly the shape downstream consumers fetch\nwhen responding to a `history.updated` webhook.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Aggregated chronological register-entry history for a company.\n\nFor each kind of change — company name (`names`), seat (`seats`), share\ncapital (`share_capital`), officers (`board_changes`), business purpose,\nlegal form and articles — the endpoint returns the full timeline of\nentries that affected it, oldest first. `current_board` is who holds office\nnow, derived by replaying every appointment, departure and correction.\nDates are ISO 8601; people use the same `person` object as the company\ndetail.\n\n- **`fetch_realtime`** — optional. When `true`, refresh the\n  underlying register history from the German registries before\n  responding. Adds upstream latency (typically several seconds).\n  Failures are surfaced via `freshness.realtime_fetching_status`; the response\n  still falls back to the most recent indexed data when a refresh\n  fails.\n\n`coverage.status` is `not_available` when no chronological extract exists\nfor the company — the Swiss commercial register publishes none, and some\nGerman entries have not been retrieved yet. Such responses carry empty\ntimelines and are not charged. A 404 means the company itself is unknown.\nThe same data backs the `history` webhook subscription type, so the\nshape returned here is exactly the shape downstream consumers fetch\nwhen responding to a `history.updated` webhook.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyHistory",
         "parameters": [
           {
@@ -7807,7 +9134,16 @@
                 }
               }
             },
-            "description": "Chronological register history grouped by category."
+            "description": "Chronological register history grouped by category.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -7849,15 +9185,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -7964,7 +9296,7 @@
     },
     "/v1/companies/{eu_id}/shareholders": {
       "get": {
-        "description": "Latest aggregated Gesellschafterliste (cap table) for a GmbH or UG.\n\n- **Coverage status** — whether a cap table is `available`, `not_applicable` (the legal form does not file Gesellschafterlisten), or `not_filed` (expected but missing)\n- **Shareholders** — each participant with share count, percentage of capital, and share class\n- **As-of metadata** — filing date of the aggregated list\n- **`fetch_realtime`** — optional. When `true`, scrape the latest Liste der\n  Gesellschafter from the German registries and re-parse it before returning.\n  Adds upstream latency (typically several seconds). Scraping or parsing\n  failures are surfaced via `freshness.realtime_fetching_status`; the response still\n  falls back to the most recent indexed cap table when a refresh fails.\n\nHistorical snapshots and cross-filing diffs are reserved for a later release.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Latest aggregated Gesellschafterliste (cap table) for a GmbH or UG.\n\n- **Coverage status** — whether a cap table is `available`, `not_applicable` (the legal form does not file Gesellschafterlisten), or `not_filed` (expected but missing)\n- **Shareholders** — each participant with share count, percentage of capital, and share class\n- **As-of metadata** — filing date of the aggregated list\n- **`fetch_realtime`** — optional. When `true`, scrape the latest Liste der\n  Gesellschafter from the German registries and re-parse it before returning.\n  Adds upstream latency (typically several seconds). Scraping or parsing\n  failures are surfaced via `freshness.realtime_fetching_status`; the response still\n  falls back to the most recent indexed cap table when a refresh fails.\n\nHistorical snapshots and cross-filing diffs are reserved for a later release.\n\nA response without a cap table (`coverage.status` other than `available`)\ncosts no credits.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyShareholders",
         "parameters": [
           {
@@ -8005,7 +9337,16 @@
                 }
               }
             },
-            "description": "Current cap table with coverage status."
+            "description": "Current cap table with coverage status.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -8047,15 +9388,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -8162,7 +9499,7 @@
     },
     "/v1/companies/{eu_id}/ubo": {
       "get": {
-        "description": "Walk the company's ownership chain and identify the natural persons\nwho ultimately benefit from it.\n\nFor every German GmbH/UG encountered in the chain, the latest filed\nGesellschafterliste is read; recursion stops at natural persons,\nforeign organisations, or any organisation without a German\nGesellschafterliste obligation. Each branch carries its direct share\npercentage. Beneficial-owner attribution follows the German\n\"all-or-nothing\" rule: each link in the chain is independently checked\nagainst the 25 % control threshold (covering both >50 % majority\ncontrol and >25 % Sperrminorität under the BVA's post-TraFinG\nreading of §3 Abs. 2 Nr. 3 GwG). The share attributed to a UBO is\nthe share at the final hop into the root — the actual capital stake\nthe UBO ultimately controls, not the multiplicative product.\n\n- **Graph** — every node and directed `source → target` edge\n  traversed during the walk. Use it to render an ownership tree or to\n  audit which branches stop short.\n- **Beneficial owners** — natural persons attributed more than 25 %\n  of the root via direct holdings, controlled chains, or the sum of\n  both, sorted descending. Empty when no person crosses the threshold\n  (e.g. ownership diluted across many parties or the chain ends in\n  unresolved organisations). Fictional UBO under §3 Abs. 2 S. 5 GwG\n  is not surfaced.\n- **Potential beneficial owners** — unresolved organisations whose\n  summed effective share at the root crosses 25 % under the same\n  all-or-nothing rule. The natural person(s) controlling each entity\n  are candidate UBOs that we couldn't trace ourselves. Same-entity\n  dedup across multiple chain positions is by `(name, registered_\n  seat, country_code)`, so an org appearing twice with 15 % + 15 %\n  surfaces as one entry at 30 %.\n- **Coverage** — `coverage.status` distinguishes four states:\n  `available` (chain fully resolved, OR remaining unresolved\n  branches sum to ≤25 % effective share and cannot hide a UBO);\n  `partial` (an unresolved branch could hide a beneficial owner —\n  read `potential_beneficial_owners` and `coverage.reason`);\n  `not_filed` (no cap table on file); `not_applicable` (legal form\n  has no Gesellschafterliste obligation).\n- **Completeness** — `has_unresolved_branches` flags any non-root\n  unresolved node in the graph; whether that compromises the answer\n  is encoded in `coverage.status` (`partial` if so, otherwise\n  `available` with `coverage.reason` explaining why the unresolved\n  branches are immaterial).\n- **`fetch_realtime`** — optional. When `true`, refetch the latest\n  Liste der Gesellschafter for every German GmbH/UG in the chain\n  before building the graph. Adds noticeable latency (several seconds\n  per company in the chain). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the graph still falls back to the most\n  recent indexed cap tables when a refresh fails.\n\n**Edge cases worth knowing:**\n\n- **Control passes through 100 %, not the chain product.** A holds\n  60 % of H, H holds 30 % of root → A is a UBO with\n  `effective_share_percent = 30`, not `18`. Each link is checked\n  independently against the 25 % threshold.\n- **Sperrminorität counts as control.** A 26 % blocking minority at\n  any intermediate level continues the chain; the 50 % majority bar\n  only matters as the higher of the two ways to qualify.\n- **Sub-threshold links break the chain.** A holds 15 % of H, H\n  holds 30 % of root → A is **not** attributed root ownership; H\n  isn't controlled by A.\n- **Direct positions aggregate even below 25 %.** A person holding\n  15 % + 15 % directly in the root is a UBO at 30 %.\n- **Multiple controlled branches sum.** A controls X and Y; X holds\n  30 %, Y holds 40 % of root → A's `effective_share_percent = 70`\n  (each branch is independently a control link, and the root-edge\n  shares add up).\n\nDesigned for KYC workflows where the freshest possible chain matters.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Walk the company's ownership chain and identify the natural persons\nwho ultimately benefit from it.\n\nFor every German GmbH/UG encountered in the chain, the latest filed\nGesellschafterliste is read; recursion stops at natural persons,\nforeign organisations, or any organisation without a German\nGesellschafterliste obligation. Each branch carries its direct share\npercentage. Beneficial-owner attribution follows the German\n\"all-or-nothing\" rule: each link in the chain is independently checked\nagainst the 25 % control threshold (covering both >50 % majority\ncontrol and >25 % Sperrminorität under the BVA's post-TraFinG\nreading of §3 Abs. 2 Nr. 3 GwG). The share attributed to a UBO is\nthe share at the final hop into the root — the actual capital stake\nthe UBO ultimately controls, not the multiplicative product.\n\n- **Graph** — every node and directed `source → target` edge\n  traversed during the walk. Use it to render an ownership tree or to\n  audit which branches stop short.\n- **Beneficial owners** — natural persons attributed more than 25 %\n  of the root via direct holdings, controlled chains, or the sum of\n  both, sorted descending. Empty when no person crosses the threshold\n  (e.g. ownership diluted across many parties or the chain ends in\n  unresolved organisations). Fictional UBO under §3 Abs. 2 S. 5 GwG\n  is not surfaced.\n- **Potential beneficial owners** — unresolved organisations whose\n  summed effective share at the root crosses 25 % under the same\n  all-or-nothing rule. The natural person(s) controlling each entity\n  are candidate UBOs that we couldn't trace ourselves. Same-entity\n  dedup across multiple chain positions is by `(name, registered_\n  seat, country_code)`, so an org appearing twice with 15 % + 15 %\n  surfaces as one entry at 30 %.\n- **Coverage** — `coverage.status` distinguishes four states:\n  `available` (chain fully resolved, OR remaining unresolved\n  branches sum to ≤25 % effective share and cannot hide a UBO);\n  `partial` (an unresolved branch could hide a beneficial owner —\n  read `potential_beneficial_owners` and `coverage.reason`);\n  `not_filed` (no cap table on file); `not_applicable` (legal form\n  has no Gesellschafterliste obligation).\n- **Completeness** — `has_unresolved_branches` flags any non-root\n  unresolved node in the graph; whether that compromises the answer\n  is encoded in `coverage.status` (`partial` if so, otherwise\n  `available` with `coverage.reason` explaining why the unresolved\n  branches are immaterial).\n- **`fetch_realtime`** — optional. When `true`, refetch the latest\n  Liste der Gesellschafter for every German GmbH/UG in the chain\n  before building the graph. Adds noticeable latency (several seconds\n  per company in the chain). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the graph still falls back to the most\n  recent indexed cap tables when a refresh fails.\n\n**Edge cases worth knowing:**\n\n- **Control passes through 100 %, not the chain product.** A holds\n  60 % of H, H holds 30 % of root → A is a UBO with\n  `effective_share_percent = 30`, not `18`. Each link is checked\n  independently against the 25 % threshold.\n- **Sperrminorität counts as control.** A 26 % blocking minority at\n  any intermediate level continues the chain; the 50 % majority bar\n  only matters as the higher of the two ways to qualify.\n- **Sub-threshold links break the chain.** A holds 15 % of H, H\n  holds 30 % of root → A is **not** attributed root ownership; H\n  isn't controlled by A.\n- **Direct positions aggregate even below 25 %.** A person holding\n  15 % + 15 % directly in the root is a UBO at 30 %.\n- **Multiple controlled branches sum.** A controls X and Y; X holds\n  30 %, Y holds 40 % of root → A's `effective_share_percent = 70`\n  (each branch is independently a control link, and the root-edge\n  shares add up).\n\nDesigned for KYC workflows where the freshest possible chain matters.\n\nA response with `coverage.status` `not_filed` or `not_applicable` carries no\nownership data and costs no credits.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyUbo",
         "parameters": [
           {
@@ -8203,7 +9540,16 @@
                 }
               }
             },
-            "description": "UBO graph plus beneficial-owner roll-up."
+            "description": "UBO graph plus beneficial-owner roll-up.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -8245,15 +9591,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -8371,7 +9713,16 @@
                 }
               }
             },
-            "description": "The caller's lists."
+            "description": "The caller's lists.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -8395,15 +9746,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -8599,7 +9946,16 @@
                 }
               }
             },
-            "description": "One page of the list's companies."
+            "description": "One page of the list's companies.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -8641,15 +9997,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -8756,7 +10108,7 @@
     },
     "/v1/subscriptions": {
       "get": {
-        "description": "Returns every subscription owned by the calling user, newest first.\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Returns the subscriptions owned by the calling user, newest first, one page at a time. Pass `pagination.next_cursor` back as `cursor` for the next page.\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "listSubscriptions",
         "parameters": [
           {
@@ -8814,11 +10166,13 @@
             }
           },
           {
+            "description": "Subscriptions per page.",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
               "default": 100,
+              "description": "Subscriptions per page.",
               "maximum": 200,
               "minimum": 1,
               "title": "Limit",
@@ -8826,11 +10180,32 @@
             }
           },
           {
+            "description": "Opaque pagination cursor from `pagination.next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque pagination cursor from `pagination.next_cursor`.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Rows to skip. Prefer `cursor`; the two cannot be combined.",
             "in": "query",
             "name": "offset",
             "required": false,
             "schema": {
               "default": 0,
+              "description": "Rows to skip. Prefer `cursor`; the two cannot be combined.",
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
@@ -8846,7 +10221,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -8870,15 +10254,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9016,7 +10396,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9076,15 +10465,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9215,7 +10600,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9257,15 +10651,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9396,7 +10786,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9438,15 +10837,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9574,7 +10969,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9598,15 +11002,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9730,7 +11130,16 @@
         ],
         "responses": {
           "204": {
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9772,15 +11181,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -9909,7 +11314,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -9951,15 +11365,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -10081,11 +11491,13 @@
             }
           },
           {
+            "description": "Events per page.",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
               "default": 50,
+              "description": "Events per page.",
               "maximum": 200,
               "minimum": 1,
               "title": "Limit",
@@ -10093,11 +11505,32 @@
             }
           },
           {
+            "description": "Opaque pagination cursor from `pagination.next_cursor`.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Opaque pagination cursor from `pagination.next_cursor`.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Rows to skip. Prefer `cursor`; the two cannot be combined.",
             "in": "query",
             "name": "offset",
             "required": false,
             "schema": {
               "default": 0,
+              "description": "Rows to skip. Prefer `cursor`; the two cannot be combined.",
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
@@ -10113,7 +11546,16 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
           },
           "401": {
             "content": {
@@ -10155,15 +11597,11 @@
             "content": {
               "application/problem+json": {
                 "example": {
-                  "detail": "One or more query parameters are invalid.",
+                  "detail": "limit: Input should be less than or equal to 50",
                   "errors": [
                     {
-                      "code": "less_than_or_equal",
-                      "path": "limit"
-                    },
-                    {
-                      "code": "enum_mismatch",
-                      "path": "wz_2025_code"
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
                     }
                   ],
                   "instance": "/v1/companies/search",
@@ -10282,7 +11720,7 @@
   ],
   "tags": [
     {
-      "description": "Find companies by free-text query and firmographic filters. Use `autocomplete` for fast suggestions and `search` for programmatic, filterable lookups.\n\n### Filter values\n\nEnum values are **case-insensitive** and tolerate the umlaut spellings German text arrives in, so `gmbh`, `muenchen` and `Baden-Wurttemberg` all resolve. Common abbreviations and alternative names work too (`NRW`, `Bavaria`, `Charlottenburg`, `Amtsgericht München`). A value that could mean two different things is rejected rather than guessed at — `Frankfurt` names two courts, so spell out `Frankfurt am Main` or `Frankfurt/Oder`.\n\n### Repeating a filter\n\nFilters that accept several values (`city`, `bundesland`, `rechtsform`, `wz_2025_code`, `industry_slug`, `legal_status`, `membership`, `tender_role`) OR-merge their values and accept any of the three encodings HTTP clients produce:\n\n```\n?rechtsform=GmbH&rechtsform=AG     repeated key\n?rechtsform=GmbH,AG                comma-separated\n?rechtsform[]=GmbH&rechtsform[]=AG bracket / indexed\n```\n\nDifferent filters are AND-merged. `city` and `bundesland` are the one exception: they form a single location filter, so a company matches when it is in any selected city **or** any selected federal state.\n\n### Reading the financials\n\nEach figure is resolved to the most recent filing that actually carries it, so they can come from *different* fiscal years — `revenue_year`, `profit_year`, `total_assets_year` and `employee_count_year` say which. Don't assume two of them share a year when computing a ratio. `financial_year` is a separate thing: the latest year the company filed anything at all.\n\nCoverage differs sharply between the metrics, and it is not a data-quality gap — it follows German filing law. Small and medium-sized companies file abridged accounts under §§ 266, 276 HGB: a balance sheet, but no profit-and-loss statement, and no headcount. So the balance-sheet total is available for far more companies than revenue or employees are. **If you are filtering on company size, use `total_assets_min` / `total_assets_max` — the revenue bounds reach only the minority that publish a full P&L.**",
+      "description": "Find companies by free-text query and firmographic filters. Use `autocomplete` for fast suggestions and `search` for programmatic, filterable lookups.\n\n### Filter values\n\nEnum values are **case-insensitive** and tolerate the umlaut spellings German text arrives in, so `gmbh`, `muenchen` and `Baden-Wurttemberg` all resolve. Common abbreviations and alternative names work too (`NRW`, `Bavaria`, `Charlottenburg`, `Amtsgericht München`). A value that could mean two different things is rejected rather than guessed at — `Frankfurt` names two courts, so spell out `Frankfurt am Main` or `Frankfurt/Oder`. Unknown values and unknown parameter names are rejected with `422` too, never silently ignored.\n\n### Repeating a filter\n\nFilters that accept several values (`city`, `bundesland`, `rechtsform`, `wz_2025_code`, `industry_slug`, `legal_status`, `membership`, `tender_role`) OR-merge their values and accept any of the three encodings HTTP clients produce:\n\n```\n?rechtsform=GmbH&rechtsform=AG     repeated key\n?rechtsform=GmbH,AG                comma-separated\n?rechtsform[]=GmbH&rechtsform[]=AG bracket / indexed\n```\n\nDifferent filters are AND-merged. `city` and `bundesland` are the one exception: they form a single location filter, so a company matches when it is in any selected city **or** any selected federal state.\n\n### Reading the financials\n\nEach figure is resolved to the most recent filing that actually carries it, so they can come from *different* fiscal years — `revenue_year`, `profit_year`, `total_assets_year` and `employee_count_year` say which. Don't assume two of them share a year when computing a ratio. `financial_year` is a separate thing: the latest year the company filed anything at all.\n\nCoverage differs sharply between the metrics, and it is not a data-quality gap — it follows German filing law. Small and medium-sized companies file abridged accounts under §§ 266, 276 HGB: a balance sheet, but no profit-and-loss statement, and no headcount. So the balance-sheet total is available for far more companies than revenue or employees are. **If you are filtering on company size, use `total_assets_min` / `total_assets_max` — the revenue bounds reach only the minority that publish a full P&L.**",
       "name": "Search"
     },
     {

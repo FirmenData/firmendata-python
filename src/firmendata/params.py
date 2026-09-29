@@ -18,7 +18,7 @@ class SearchFilters(TypedDict, total=False):
     eu_id: NotRequired[str]
     # Maximum number of hits to return per page. Hard upper bound is 50.
     limit: NotRequired[int]
-    # Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response...
+    # Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) fr...
     cursor: NotRequired[str]
     # Field to order results by. Defaults to keyword-match relevance when `q` is given, oth...
     sort: NotRequired[Literal['name', 'revenue', 'profit', 'total_assets', 'employee_count']]
@@ -102,5 +102,9 @@ class SubscriptionFilters(TypedDict, total=False):
     subscription_type: NotRequired[Literal['details', 'history', 'shareholders', 'ubo', 'doc_articles_of_association', 'doc_company_registration', 'doc_model_protocol', 'doc_shareholder_list']]
     # Filter by `recurring` or `one_time`.
     mode: NotRequired[Literal['recurring', 'one_time']]
+    # Subscriptions per page.
     limit: NotRequired[int]
+    # Opaque pagination cursor from `pagination.next_cursor`.
+    cursor: NotRequired[str]
+    # Rows to skip. Prefer `cursor`; the two cannot be combined.
     offset: NotRequired[int]

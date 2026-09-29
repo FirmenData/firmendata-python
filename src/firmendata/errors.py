@@ -11,6 +11,9 @@ Every non-2xx response carries a JSON body shaped like::
       "request_id": "8e510d86-..."
     }
 
+A 422 adds ``"errors": [{"param": ..., "message": ...}]``, one entry per
+offending parameter.
+
 Exceptions are selected by the ``type`` slug rather than the status code,
 because the slug is the stable part of the contract — a status can be shared
 by several distinct failures. ``request_id`` is preserved on every exception;
@@ -73,7 +76,8 @@ class APIError(FirmenDataError):
         self.detail = detail
         self.instance = instance
         self.request_id = request_id
-        #: Per-field validation failures. Only populated on 422.
+        #: Per-parameter validation failures, ``{"param", "message"}`` each.
+        #: Only populated on 422.
         self.errors = list(errors or [])
         self.headers = dict(headers or {})
 

@@ -18,14 +18,32 @@ class Address(TypedDict):
     street: NotRequired[str | None]
 
 
+class AddressEntry(TypedDict):
+    address: Address
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['address_entry']]
+
+
+class ArticlesEntry(TypedDict):
+    change: Literal['created', 'amended']
+    document_date: NotRequired[str | None]
+    document_type: NotRequired[str | None]
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['articles_entry']]
+
+
 class AutocompleteHit(TypedDict):
     display_name: str
     eu_id: str
     legal_name: str
     object: NotRequired[Literal['autocomplete_hit']]
+    register_canton: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
+    uid: NotRequired[str | None]
 
 
 class BilanzAttachment(TypedDict):
@@ -36,6 +54,15 @@ class BilanzAttachment(TypedDict):
     file_type: NotRequired[str | None]
     object: NotRequired[Literal['bilanz_attachment']]
     public_name: NotRequired[str | None]
+
+
+class BoardRepresentation(TypedDict):
+    excluded: NotRequired[bool]
+    exempt_from_self_dealing_ban: NotRequired[bool]
+    joint: NotRequired[bool]
+    joint_with: NotRequired[str | None]
+    object: NotRequired[Literal['board_representation']]
+    sole: NotRequired[bool]
 
 
 Bundesland: TypeAlias = Literal[
@@ -71,6 +98,7 @@ class CompanyDocument(TypedDict):
     file_id: str
     file_name_de: str
     file_name_en: str
+    is_outdated: NotRequired[bool]
     object: NotRequired[Literal['company_document']]
     published_at: NotRequired[str | None]
     type: Literal[
@@ -135,6 +163,18 @@ class FinancialRow(TypedDict):
     year: int
 
 
+class FirstRegisterEntry(TypedDict):
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    first_registered_date: NotRequired[str | None]
+    founding_document_date: NotRequired[str | None]
+    founding_document_type: NotRequired[str | None]
+    object: NotRequired[Literal['first_register_entry']]
+    origin: NotRequired[
+        Literal['founding', 'transfer', 'conversion', 'charter_predates']
+    ]
+
+
 class FounderRecordItem(TypedDict):
     birth_year: NotRequired[int | None]
     entry_date: NotRequired[str | None]
@@ -157,6 +197,22 @@ class Freshness(TypedDict):
         'company_unavailable',
         'realtime_fetching_disabled',
     ]
+
+
+class HistoryBranch(TypedDict):
+    address: NotRequired[str | None]
+    city: NotRequired[str | None]
+    name: NotRequired[str | None]
+    object: NotRequired[Literal['branch']]
+    register_court: NotRequired[str | None]
+    register_number: NotRequired[str | None]
+    register_type: NotRequired[str | None]
+
+
+class HistoryCoverage(TypedDict):
+    object: NotRequired[Literal['history_coverage']]
+    reason: NotRequired[str | None]
+    status: Literal['available', 'not_available']
 
 
 IndustrySlug: TypeAlias = Literal[
@@ -206,6 +262,14 @@ class InsolvencyBlock(TypedDict):
     self_administration: NotRequired[bool]
 
 
+class LegalFormEntry(TypedDict):
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    legal_form: str
+    object: NotRequired[Literal['legal_form_entry']]
+    previous_legal_form: NotRequired[str | None]
+
+
 LegalStatus: TypeAlias = Literal[
     'active', 'in_liquidation', 'insolvent', 'dissolved', 'deleted'
 ]
@@ -246,7 +310,7 @@ class LocalizedText(TypedDict):
     en: NotRequired[str | None]
     object: NotRequired[Literal['localized_text']]
     translation_source: NotRequired[
-        Literal['original', 'human', 'machine', 'passthrough']
+        Literal['original', 'human', 'machine', 'passthrough'] | None
     ]
 
 
@@ -259,6 +323,13 @@ class Money(TypedDict):
     amount: NotRequired[float | None]
     currency: NotRequired[str]
     object: NotRequired[Literal['money']]
+
+
+class NameEntry(TypedDict):
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    name: str
+    object: NotRequired[Literal['name_entry']]
 
 
 NotificationCadence: TypeAlias = Literal['immediately', 'daily', 'weekly', 'monthly']
@@ -315,18 +386,25 @@ class PotentialBeneficialOwner(TypedDict):
 
 
 class Error(TypedDict):
-    code: NotRequired[str]
-    path: NotRequired[str]
+    message: str
+    param: str
 
 
 class Problem(TypedDict):
     detail: NotRequired[str]
     errors: NotRequired[list[Error]]
     instance: NotRequired[str]
-    request_id: NotRequired[str]
+    request_id: str
     status: int
     title: str
     type: str
+
+
+class PurposeEntry(TypedDict):
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['purpose_entry']]
+    purpose: str
 
 
 Rechtsform: TypeAlias = Literal[
@@ -503,13 +581,6 @@ RegisterCourt: TypeAlias = Literal[
 ]
 
 
-class RegisterHistoryEvent(TypedDict):
-    data: NotRequired[dict[str, Any]]
-    entry_date: NotRequired[str | None]
-    entry_number: NotRequired[int | None]
-    object: NotRequired[Literal['register_history_event']]
-
-
 RegisterType: TypeAlias = Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR']
 
 
@@ -530,6 +601,7 @@ class RelationshipsBlock(TypedDict):
     object: NotRequired[Literal['company_relationships']]
     parent_company: NotRequired[RelatedCompany | None]
     subsidiaries: NotRequired[list[RelatedCompany]]
+    subsidiaries_total: NotRequired[int]
 
 
 class SearchHit(TypedDict):
@@ -541,6 +613,7 @@ class SearchHit(TypedDict):
     eu_id: str
     financial_year: NotRequired[int | None]
     founded_at: NotRequired[str | None]
+    is_branch: NotRequired[bool]
     legal_name: str
     legal_status: NotRequired[
         Literal['active', 'in_liquidation', 'insolvent', 'dissolved', 'deleted']
@@ -548,6 +621,7 @@ class SearchHit(TypedDict):
     object: NotRequired[Literal['search_hit']]
     profit: NotRequired[float | None]
     profit_year: NotRequired[int | None]
+    register_canton: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
@@ -555,16 +629,24 @@ class SearchHit(TypedDict):
     revenue_year: NotRequired[int | None]
     total_assets: NotRequired[float | None]
     total_assets_year: NotRequired[int | None]
+    uid: NotRequired[str | None]
     website: NotRequired[str | None]
 
 
 class SearchResponse(TypedDict):
     data: NotRequired[list[SearchHit]]
-    execution_time_ms: NotRequired[float | None]
+    execution_time_ms: NotRequired[int | None]
     filters_echo: NotRequired[dict[str, Any]]
     freshness: NotRequired[Freshness]
     object: NotRequired[Literal['list']]
     pagination: NotRequired[PaginationInfo]
+
+
+class SeatEntry(TypedDict):
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['seat_entry']]
+    seat: str
 
 
 class Shareholder(TypedDict):
@@ -626,8 +708,9 @@ class SubscriptionEvent(TypedDict):
 
 
 class SubscriptionEventList(TypedDict):
-    items: NotRequired[list[SubscriptionEvent]]
+    data: NotRequired[list[SubscriptionEvent]]
     object: NotRequired[Literal['list']]
+    pagination: NotRequired[PaginationInfo]
 
 
 class SubscriptionEventResendResponse(TypedDict):
@@ -738,6 +821,8 @@ class Wz2025Score(TypedDict):
 
 
 class AiInsightsBlock(TypedDict):
+    based_on_fiscal_year: NotRequired[int | None]
+    generated_at: NotRequired[str | None]
     object: NotRequired[Literal['ai_insights']]
     outlook: NotRequired[LocalizedText | None]
     summary: NotRequired[LocalizedText | None]
@@ -758,12 +843,56 @@ class BeneficialOwner(TypedDict):
     person: Person
 
 
+class BoardChange(TypedDict):
+    change: Literal['appointed', 'departed', 'updated']
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['board_change']]
+    organization: NotRequired[OrganizationRef | None]
+    person: NotRequired[Person | None]
+    representation: NotRequired[BoardRepresentation | None]
+    role: NotRequired[str | None]
+
+
+class BoardMember(TypedDict):
+    appointed_date: NotRequired[str | None]
+    object: NotRequired[Literal['board_member']]
+    organization: NotRequired[OrganizationRef | None]
+    person: NotRequired[Person | None]
+    representation: NotRequired[BoardRepresentation | None]
+    role: NotRequired[str | None]
+
+
+class BranchEntry(TypedDict):
+    branches: NotRequired[list[HistoryBranch]]
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['branch_entry']]
+
+
 class BusinessBlock(TypedDict):
     business_branches: NotRequired[list[BusinessBranch]]
     object: NotRequired[Literal['company_business']]
     opportunity_keywords: NotRequired[list[str]]
     products: NotRequired[list[str]]
     risk_keywords: NotRequired[list[str]]
+
+
+class CapitalEntry(TypedDict):
+    amount: Money
+    change: NotRequired[Money | None]
+    change_type: Literal[
+        'initial',
+        'cash_increase',
+        'contribution_in_kind',
+        'from_authorized_capital',
+        'from_conditional_capital',
+        'decrease',
+        'unchanged',
+    ]
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['capital_entry']]
 
 
 class CompanyDocumentDownload(TypedDict):
@@ -773,6 +902,7 @@ class CompanyDocumentDownload(TypedDict):
     file_name_de: str
     file_name_en: str
     freshness: Freshness
+    is_outdated: NotRequired[bool]
     object: NotRequired[Literal['company_document_download']]
     published_at: NotRequired[str | None]
     type: Literal[
@@ -786,26 +916,6 @@ class CompanyDocumentDownload(TypedDict):
     type_label_de: str
     type_label_en: str
     updated_at: str
-
-
-class CompanyHistory(TypedDict):
-    board_members: NotRequired[list[RegisterHistoryEvent]]
-    company_status: NotRequired[str | None]
-    current_board: NotRequired[list[dict[str, Any]]]
-    erste_eintragung: NotRequired[RegisterHistoryEvent | None]
-    eu_id: str
-    firma: NotRequired[list[RegisterHistoryEvent]]
-    freshness: Freshness
-    gegenstand: NotRequired[list[RegisterHistoryEvent]]
-    geschaeftsanschrift: NotRequired[list[RegisterHistoryEvent]]
-    kapital: NotRequired[list[RegisterHistoryEvent]]
-    kommanditisten: NotRequired[list[RegisterHistoryEvent]]
-    legal_status_events: NotRequired[list[LegalStatusEvent]]
-    object: NotRequired[Literal['company_history']]
-    rechtsform: NotRequired[list[RegisterHistoryEvent]]
-    satzung_events: NotRequired[list[RegisterHistoryEvent]]
-    sitz: NotRequired[list[RegisterHistoryEvent]]
-    zweigniederlassungen: NotRequired[list[RegisterHistoryEvent]]
 
 
 class CompanyListDetailResponse(TypedDict):
@@ -843,6 +953,7 @@ class FinancialMetric(TypedDict):
     gross_profit: NotRequired[Money | None]
     liabilities_and_equity_total: NotRequired[Money | None]
     object: NotRequired[Literal['financial_metric']]
+    other_operating_income: NotRequired[Money | None]
     profit: NotRequired[Money | None]
     revenue: NotRequired[Money | None]
     revenue_ceiling: NotRequired[Money | None]
@@ -853,7 +964,12 @@ class FinancialMetric(TypedDict):
 
 class FinancialSummaryBlock(TypedDict):
     latest_employee_count: NotRequired[int | None]
+    latest_employee_count_year: NotRequired[int | None]
     latest_fiscal_year: NotRequired[int | None]
+    latest_profit: NotRequired[Money | None]
+    latest_profit_year: NotRequired[int | None]
+    latest_revenue: NotRequired[Money | None]
+    latest_revenue_year: NotRequired[int | None]
     latest_total_assets: NotRequired[Money | None]
     latest_total_liabilities_and_equity: NotRequired[Money | None]
     object: NotRequired[Literal['financial_summary']]
@@ -884,9 +1000,20 @@ class IndustryBlock(TypedDict):
 
 class LeiGraphBlock(TypedDict):
     direct_children: NotRequired[list[LeiRelative]]
+    direct_children_total: NotRequired[int]
     direct_parent: NotRequired[LeiRelative | None]
     lei_code: NotRequired[str | None]
     object: NotRequired[Literal['lei_graph']]
+
+
+class LimitedPartner(TypedDict):
+    contribution: NotRequired[Money | None]
+    entry_date: NotRequired[str | None]
+    entry_number: NotRequired[int | None]
+    object: NotRequired[Literal['limited_partner']]
+    organization: NotRequired[OrganizationRef | None]
+    person: NotRequired[Person | None]
+    share_percent: NotRequired[float | None]
 
 
 class Member(TypedDict):
@@ -959,8 +1086,9 @@ class SubscriptionCreated(TypedDict):
 
 
 class SubscriptionList(TypedDict):
-    items: NotRequired[list[Subscription]]
+    data: NotRequired[list[Subscription]]
     object: NotRequired[Literal['list']]
+    pagination: NotRequired[PaginationInfo]
 
 
 class SubscriptionTestRequest(TypedDict):
@@ -1031,22 +1159,46 @@ class CompanyDetail(TypedDict):
     freshness: Freshness
     industry_categorization: IndustryBlock
     insolvency: NotRequired[InsolvencyBlock | None]
+    is_branch: NotRequired[bool]
     latest_register_entry_date: NotRequired[str | None]
     legal_form: NotRequired[str | None]
     legal_name: NotRequired[str | None]
+    legal_status: NotRequired[
+        Literal['active', 'in_liquidation', 'insolvent', 'dissolved', 'deleted']
+    ]
     lei_graph: NotRequired[LeiGraphBlock | None]
     management: NotRequired[list[Member]]
     object: NotRequired[Literal['company']]
+    register_canton: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
     registered_seat: NotRequired[str | None]
     share_capital: NotRequired[Money | None]
-    status: NotRequired[
-        Literal['active', 'in_liquidation', 'insolvent', 'dissolved', 'deleted']
-    ]
+    uid: NotRequired[str | None]
     ust_id_nr: NotRequired[str | None]
     wirtschafts_id_nr: NotRequired[str | None]
+
+
+class CompanyHistory(TypedDict):
+    articles_of_association: NotRequired[list[ArticlesEntry]]
+    board_changes: NotRequired[list[BoardChange]]
+    branches: NotRequired[list[BranchEntry]]
+    business_addresses: NotRequired[list[AddressEntry]]
+    business_purposes: NotRequired[list[PurposeEntry]]
+    coverage: HistoryCoverage
+    current_board: NotRequired[list[BoardMember]]
+    eu_id: str
+    first_entry: NotRequired[FirstRegisterEntry | None]
+    freshness: Freshness
+    legal_forms: NotRequired[list[LegalFormEntry]]
+    legal_status: NotRequired[str | None]
+    legal_status_events: NotRequired[list[LegalStatusEvent]]
+    limited_partners: NotRequired[list[LimitedPartner]]
+    names: NotRequired[list[NameEntry]]
+    object: NotRequired[Literal['company_history']]
+    seats: NotRequired[list[SeatEntry]]
+    share_capital: NotRequired[list[CapitalEntry]]
 
 
 class FinancialHistoryBlock(TypedDict):
@@ -1059,10 +1211,10 @@ class FinancialHistoryBlock(TypedDict):
 
 class CompanyFinancials(TypedDict):
     employee_history: EmployeeHistoryBlock
+    eu_id: str
     financial_publications: NotRequired[list[FinancialPublication]]
     freshness: Freshness
     history: FinancialHistoryBlock
-    id: str
     object: NotRequired[Literal['company_financials']]
     relationships: NotRequired[RelationshipsBlock | None]
     summary: NotRequired[FinancialSummaryBlock | None]
