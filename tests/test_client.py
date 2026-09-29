@@ -165,12 +165,25 @@ class TestErrorMapping:
         def handler(request):
             return httpx.Response(422, json=problem(
                 "validation-error", 422,
-                errors=[{"path": "q", "code": "too_short"}],
+                errors=[{"param": "q", "message": "String should have at least 3 characters"}],
             ))
 
         with pytest.raises(ValidationError) as exc:
             client_with(handler, max_retries=0).autocomplete("ab")
-        assert exc.value.errors[0]["path"] == "q"
+        assert exc.value.errors[0]["param"] == "q"
+
+    def test_financial_line_items_are_opt_in(self):
+        seen = []
+
+        def handler(request):
+            seen.append(request.url.params)
+            return httpx.Response(200, json={})
+
+        client = client_with(handler, max_retries=0)
+        client.get_financials("DE1")
+        client.get_financials("DE1", include_line_items=True, years=3)
+        assert not seen[0]
+        assert seen[1].get_list("include") == ["line_items"] and seen[1]["years"] == "3"
 
     def test_rate_limit_carries_retry_after(self):
         def handler(request):
