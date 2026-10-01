@@ -21,6 +21,7 @@ from .types import (
     AutocompleteResponse,
     CompanyDetail,
     CompanyDocumentDownload,
+    CompanyDocumentList,
     CompanyFinancials,
     CompanyHistory,
     SearchResponse,
@@ -182,12 +183,17 @@ class AsyncFirmenData(_BaseClient):
             params={"fetch_realtime": fetch_realtime},
         )
 
+    async def list_documents(self, eu_id: str) -> CompanyDocumentList:
+        """Check the registry live and list documents. See the sync client."""
+        return await self._request("GET", f"/v1/companies/{_segment(eu_id)}/documents")
+
     async def download_document(
             self,
             eu_id: str,
             *,
             file_type: str,
             file_id: str | None = None,
+            document_id: str | None = None,
             fetch_realtime: bool = False,
     ) -> CompanyDocumentDownload:
         return await self._request(
@@ -195,6 +201,7 @@ class AsyncFirmenData(_BaseClient):
             params={
                 "file_type": file_type,
                 "file_id": file_id,
+                "document_id": document_id,
                 "fetch_realtime": fetch_realtime,
             },
         )

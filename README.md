@@ -1,7 +1,8 @@
 # firmendata-python
 
 Official Python client for the [firmendata](https://firmendata.com) API — data on
-**2.4 million German companies** from the Unternehmensregister and Handelsregister:
+German and Swiss companies from the Unternehmensregister, Handelsregister
+and Swiss commercial register:
 register search, parsed annual financial statements, company profiles,
 register documents, and ownership chains for KYC.
 
@@ -42,8 +43,9 @@ fd = FirmenData(api_key="firmendata_live_...")
 
 ## Search the register
 
-The main entry point: 41 filters over all 2.4 million companies. Different
-filters combine with AND, repeated values with OR.
+The main entry point: search German and Swiss companies. Different filters
+combine with AND, repeated values with OR; `city`, `bundesland` and `canton`
+combine into one location filter with OR.
 
 ```python
 results = fd.search(
@@ -72,6 +74,12 @@ Values are case-insensitive and tolerate German spelling both ways — `gmbh`,
 register court, federal state, city, industry, founding date, size, web
 presence, connected person or EU public-procurement role; see the
 [filter reference](https://api.firmendata.com/v1/docs#tag/Search).
+
+Use `country="DE"` or `country="CH"` for a single country and
+`canton=["ZH", "BE"]` for Swiss cantons. `rechtsform` includes Swiss forms
+such as `"AG (CH)"` and `"GmbH (CH)"`. `sort="name"` defaults to ascending.
+Search hits include `registered_seat`; company profiles, search and
+autocomplete hits include `country_code` (`"DE"` or `"CH"`).
 
 > **Filtering on size? Use `total_assets`, not `revenue`.** Small and
 > medium-sized German companies file abridged accounts — a balance sheet, but
@@ -129,11 +137,31 @@ computing a ratio.
 ## Documents
 
 ```python
-doc = fd.download_document(eu_id, file_type="CD")
+documents = fd.list_documents(eu_id)
+doc = fd.download_document(eu_id, file_type="register_extract_current")
+
+for item in documents["data"]:
+    if item.get("document_id") and not item["is_latest"]:
+        older = fd.download_document(
+            eu_id, file_type=item["type"], document_id=item["document_id"],
+        )
+        break
 ```
 
 Aktueller and Chronologischer Abdruck, Gesellschafterliste, Satzung, Anmeldung
 and Musterprotokoll, as presigned download URLs.
+
+`list_documents()` checks the registry live and returns current and older
+versions with labels, dates, `is_latest`, stored-copy metadata, `coverage`
+and `freshness`. It costs 5 credits; Swiss, empty and registry-unreachable
+answers are unbilled. Swiss companies return an empty list with
+`coverage["status"] == "not_applicable"`.
+
+Pass a `doc_<int>` identifier from the list as `document_id` with its matching
+`file_type` to download a specific DK version. Omit it for the latest version.
+It cannot be combined with `file_id` or `fetch_realtime=True`. Register
+extracts have no `document_id`; download them by `file_type`. Download
+responses include `document_id` and the registry `label` when available.
 
 ## Ownership: shareholders and UBO
 
