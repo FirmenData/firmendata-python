@@ -179,7 +179,7 @@ class CompanyListSummary(TypedDict):
     updated_at: str
 
 
-CompanySize: TypeAlias = Literal['klein', 'mittelgross']
+CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
 Country: TypeAlias = Literal['DE', 'CH']

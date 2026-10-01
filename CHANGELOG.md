@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1
+
+Regenerated from the updated API contract. **Additive, non-breaking:**
+
+- Search filter `company_size` now includes `kleinst`
+  (Kleinstkapitalgesellschaft) alongside `klein` and `mittelgross`.
+  Its description now references § 267 / § 267a HGB.
+
 ## 1.2.0
 
 Regenerated from API contract 1.2.0. **Additive, non-breaking:**
