@@ -35,6 +35,7 @@ class ArticlesEntry(TypedDict):
 
 
 class AutocompleteHit(TypedDict):
+    country_code: Literal['DE', 'CH']
     display_name: str
     eu_id: str
     legal_name: str
@@ -94,6 +95,36 @@ class BusinessBranch(TypedDict):
     revenue_unit: NotRequired[str | None]
 
 
+Canton: TypeAlias = Literal[
+    'AG',
+    'AI',
+    'AR',
+    'BE',
+    'BL',
+    'BS',
+    'FR',
+    'GE',
+    'GL',
+    'GR',
+    'JU',
+    'LU',
+    'NE',
+    'NW',
+    'OW',
+    'SG',
+    'SH',
+    'SO',
+    'SZ',
+    'TG',
+    'TI',
+    'UR',
+    'VD',
+    'VS',
+    'ZG',
+    'ZH',
+]
+
+
 class CompanyDocument(TypedDict):
     file_id: str
     file_name_de: str
@@ -114,6 +145,29 @@ class CompanyDocument(TypedDict):
     updated_at: str
 
 
+class CompanyDocumentListItem(TypedDict):
+    document_date: NotRequired[str | None]
+    document_id: NotRequired[str | None]
+    fetched_at: NotRequired[str | None]
+    file_id: NotRequired[str | None]
+    is_latest: bool
+    is_outdated: NotRequired[bool]
+    label: NotRequired[str | None]
+    object: NotRequired[Literal['company_document_listing']]
+    published_at: NotRequired[str | None]
+    stored: bool
+    type: Literal[
+        'register_extract_current',
+        'register_extract_chronological',
+        'shareholder_list',
+        'articles_of_association',
+        'company_registration',
+        'model_protocol',
+    ]
+    type_label_de: str
+    type_label_en: str
+
+
 class CompanyListSummary(TypedDict):
     alerts_enabled: NotRequired[bool]
     company_count: NotRequired[int]
@@ -126,6 +180,15 @@ class CompanyListSummary(TypedDict):
 
 
 CompanySize: TypeAlias = Literal['klein', 'mittelgross']
+
+
+Country: TypeAlias = Literal['DE', 'CH']
+
+
+class DocumentsCoverage(TypedDict):
+    object: NotRequired[Literal['documents_coverage']]
+    reason: NotRequired[str | None]
+    status: Literal['available', 'not_applicable']
 
 
 class EmployeeYear(TypedDict):
@@ -439,6 +502,24 @@ Rechtsform: TypeAlias = Literal[
     'ausländische Rechtsform (GnR)',
     'Stiftung & Co. KG',
     'eG & Co. KG',
+    'Einzelunternehmen (CH)',
+    'Kollektivgesellschaft (CH)',
+    'Kommanditgesellschaft (CH)',
+    'Kommanditaktiengesellschaft (CH)',
+    'AG (CH)',
+    'GmbH (CH)',
+    'Genossenschaft (CH)',
+    'Verein (CH)',
+    'Stiftung (CH)',
+    'Zweigniederlassung ausl. Ges. (CH)',
+    'Besondere Rechtsform (CH)',
+    'KmGK (CH)',
+    'SICAV (CH)',
+    'SICAF (CH)',
+    'Institut des öffentlichen Rechts (CH)',
+    'Nichtkaufmännische Prokura (CH)',
+    'Gemeinderschaft (CH)',
+    'Zweigniederlassung (CH)',
 ]
 
 
@@ -606,6 +687,7 @@ class RelationshipsBlock(TypedDict):
 
 class SearchHit(TypedDict):
     address: NotRequired[Address | None]
+    country_code: Literal['DE', 'CH']
     cpv_award_codes: NotRequired[list[str]]
     display_name: str
     employee_count: NotRequired[int | None]
@@ -625,6 +707,7 @@ class SearchHit(TypedDict):
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
+    registered_seat: NotRequired[str | None]
     revenue: NotRequired[float | None]
     revenue_year: NotRequired[int | None]
     total_assets: NotRequired[float | None]
@@ -896,6 +979,7 @@ class CapitalEntry(TypedDict):
 
 
 class CompanyDocumentDownload(TypedDict):
+    document_id: NotRequired[str | None]
     download_url: str
     download_url_expires_at: str
     file_id: str
@@ -903,6 +987,7 @@ class CompanyDocumentDownload(TypedDict):
     file_name_en: str
     freshness: Freshness
     is_outdated: NotRequired[bool]
+    label: NotRequired[str | None]
     object: NotRequired[Literal['company_document_download']]
     published_at: NotRequired[str | None]
     type: Literal[
@@ -916,6 +1001,15 @@ class CompanyDocumentDownload(TypedDict):
     type_label_de: str
     type_label_en: str
     updated_at: str
+
+
+class CompanyDocumentList(TypedDict):
+    country_code: Literal['DE', 'CH']
+    coverage: DocumentsCoverage
+    data: list[CompanyDocumentListItem]
+    eu_id: str
+    freshness: Freshness
+    object: NotRequired[Literal['company_document_list']]
 
 
 class CompanyListDetailResponse(TypedDict):
@@ -1148,6 +1242,7 @@ class CompanyDetail(TypedDict):
     business_info: NotRequired[BusinessBlock | None]
     business_purpose: NotRequired[str | None]
     contact: ContactBlock
+    country_code: Literal['DE', 'CH']
     display_name: str
     documents: NotRequired[list[CompanyDocument]]
     elf_code: NotRequired[str | None]

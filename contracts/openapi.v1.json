@@ -318,6 +318,15 @@
       "AutocompleteHit": {
         "description": "One autocomplete suggestion.",
         "properties": {
+          "country_code": {
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "enum": [
+              "DE",
+              "CH"
+            ],
+            "title": "Country Code",
+            "type": "string"
+          },
           "display_name": {
             "description": "The legal name without its legal-form suffix and status markers (`VOLKSWAGEN AKTIENGESELLSCHAFT` → `VOLKSWAGEN`, `Siemens Suisse SA` → `Siemens Suisse`). Identical for the same company on every endpoint.",
             "title": "Display Name",
@@ -412,6 +421,7 @@
         },
         "required": [
           "eu_id",
+          "country_code",
           "legal_name",
           "display_name"
         ],
@@ -992,6 +1002,38 @@
         "title": "BusinessBranch",
         "type": "object"
       },
+      "Canton": {
+        "enum": [
+          "AG",
+          "AI",
+          "AR",
+          "BE",
+          "BL",
+          "BS",
+          "FR",
+          "GE",
+          "GL",
+          "GR",
+          "JU",
+          "LU",
+          "NE",
+          "NW",
+          "OW",
+          "SG",
+          "SH",
+          "SO",
+          "SZ",
+          "TG",
+          "TI",
+          "UR",
+          "VD",
+          "VS",
+          "ZG",
+          "ZH"
+        ],
+        "title": "Canton",
+        "type": "string"
+      },
       "CapitalEntry": {
         "description": "A share-capital figure recorded by one entry.",
         "properties": {
@@ -1121,6 +1163,15 @@
           "contact": {
             "$ref": "#/components/schemas/ContactBlock",
             "description": "Contact and web presence (domain, logo, social profiles, LinkedIn enrichment)."
+          },
+          "country_code": {
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "enum": [
+              "DE",
+              "CH"
+            ],
+            "title": "Country Code",
+            "type": "string"
           },
           "display_name": {
             "description": "The legal name without its legal-form suffix and status markers (`VOLKSWAGEN AKTIENGESELLSCHAFT` → `VOLKSWAGEN`, `Siemens Suisse SA` → `Siemens Suisse`). Identical for the same company on every endpoint.",
@@ -1426,6 +1477,7 @@
         },
         "required": [
           "eu_id",
+          "country_code",
           "freshness",
           "display_name",
           "industry_categorization",
@@ -1523,6 +1575,18 @@
       "CompanyDocumentDownload": {
         "description": "Document metadata plus a short-lived presigned download URL.",
         "properties": {
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Catalog identifier echoed for a specific DK version.",
+            "title": "Document Id"
+          },
           "download_url": {
             "description": "Presigned download URL. Honours the file's original content type.",
             "title": "Download Url",
@@ -1558,6 +1622,18 @@
             "description": "`true` for a register extract (`register_extract_current` / `register_extract_chronological`) older than the company's latest register entry — the extract predates a change the register has since recorded. Pass `fetch_realtime=true` to `/documents/download` for a fresh one. Always `false` for the other document types.",
             "title": "Is Outdated",
             "type": "boolean"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The document's label as the registry lists it. Its language depends on which register portal answered (German or English); use `type_label_de` / `type_label_en` for a stable name.",
+            "title": "Label"
           },
           "object": {
             "const": "company_document_download",
@@ -1622,6 +1698,190 @@
           "download_url_expires_at"
         ],
         "title": "CompanyDocumentDownload",
+        "type": "object"
+      },
+      "CompanyDocumentList": {
+        "properties": {
+          "country_code": {
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "enum": [
+              "DE",
+              "CH"
+            ],
+            "title": "Country Code",
+            "type": "string"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/DocumentsCoverage",
+            "description": "Whether register document downloads apply to this company."
+          },
+          "data": {
+            "description": "Register extracts first, then DK documents grouped by type, newest dated versions first and undated versions last. Includes older DK versions. Empty when no documents are available or downloads do not apply.",
+            "items": {
+              "$ref": "#/components/schemas/CompanyDocumentListItem"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "eu_id": {
+            "description": "firmendata company identifier.",
+            "title": "Eu Id",
+            "type": "string"
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/Freshness",
+            "description": "Outcome of this request's live catalog walk. `last_checked_at` is the successful check time, or null when the walk did not succeed. Failed walks serve the stored catalog without billing."
+          },
+          "object": {
+            "const": "company_document_list",
+            "default": "company_document_list",
+            "description": "Discriminator. Always `company_document_list`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eu_id",
+          "country_code",
+          "coverage",
+          "freshness",
+          "data"
+        ],
+        "title": "CompanyDocumentList",
+        "type": "object"
+      },
+      "CompanyDocumentListItem": {
+        "properties": {
+          "document_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Document date stated in the registry label, when known; null for register extracts.",
+            "title": "Document Date"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Catalog identifier accepted by `/documents/download`; null for register extracts, which are downloaded by `file_type`.",
+            "title": "Document Id"
+          },
+          "fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When firmendata last fetched the stored copy; null when no copy is held.",
+            "title": "Fetched At"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Identifier of the stored copy (`file_<id>`); null when no copy is held.",
+            "title": "File Id"
+          },
+          "is_latest": {
+            "description": "`true` for the first, newest listed version of its type. Always `true` for register extracts.",
+            "title": "Is Latest",
+            "type": "boolean"
+          },
+          "is_outdated": {
+            "default": false,
+            "description": "`true` for a stored register extract older than the company's latest register entry. Request `/documents/download` with `fetch_realtime=true` for a current extract. Always `false` for DK documents.",
+            "title": "Is Outdated",
+            "type": "boolean"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The document's label as the registry lists it. Its language depends on which register portal answered (German or English); use `type_label_de` / `type_label_en` for a stable name and `document_date` for the date.",
+            "title": "Label"
+          },
+          "object": {
+            "const": "company_document_listing",
+            "default": "company_document_listing",
+            "description": "Discriminator. Always `company_document_listing`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Publication date recorded in the catalog, when known; null for register extracts.",
+            "title": "Published At"
+          },
+          "stored": {
+            "description": "`true` when firmendata holds a copy that can be downloaded immediately.",
+            "title": "Stored",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "Kind of register document.",
+            "enum": [
+              "register_extract_current",
+              "register_extract_chronological",
+              "shareholder_list",
+              "articles_of_association",
+              "company_registration",
+              "model_protocol"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "type_label_de": {
+            "description": "German document type name, such as `Aktueller Abdruck` or `Liste der Gesellschafter`.",
+            "title": "Type Label De",
+            "type": "string"
+          },
+          "type_label_en": {
+            "description": "English document type name, such as `Current Register Extract` or `Shareholder List`.",
+            "title": "Type Label En",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "type_label_de",
+          "type_label_en",
+          "is_latest",
+          "stored"
+        ],
+        "title": "CompanyDocumentListItem",
         "type": "object"
       },
       "CompanyFinancials": {
@@ -2043,6 +2303,51 @@
           }
         },
         "title": "ContactBlock",
+        "type": "object"
+      },
+      "Country": {
+        "enum": [
+          "DE",
+          "CH"
+        ],
+        "title": "Country",
+        "type": "string"
+      },
+      "DocumentsCoverage": {
+        "properties": {
+          "object": {
+            "const": "documents_coverage",
+            "default": "documents_coverage",
+            "description": "Discriminator. Always `documents_coverage`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explanation when document downloads do not apply to this company.",
+            "title": "Reason"
+          },
+          "status": {
+            "description": "`available` for companies in the German registers; `not_applicable` for the Swiss commercial register, which publishes no document downloads. An available catalog may be empty.",
+            "enum": [
+              "available",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "DocumentsCoverage",
         "type": "object"
       },
       "EmployeeHistoryBlock": {
@@ -4040,7 +4345,7 @@
         "type": "string"
       },
       "NotificationType": {
-        "description": "Transport for the notification.\n\n* ``webhook``: HTTP POST a signed JSON payload to ``webhook_url``.\n* ``email``:   SMTP (Zoho) deliver a bilingual email to ``recipient_email``.\n\nA subscription with ``notification_type = None`` is async (poll-only):\nthe dispatcher performs no outbound delivery, records the change in\n``subscription_events``, and the customer retrieves the rendered\npayload via the events API using the subscription/job id returned at\ncreate time.",
+        "description": "Transport for the notification.\n\n* ``webhook``: HTTP POST a signed JSON payload to ``webhook_url``.\n* ``email``:   Send a bilingual email to ``recipient_email``.\n\nA subscription with ``notification_type = None`` is async (poll-only):\nthe dispatcher performs no outbound delivery, records the change in\n``subscription_events``, and the customer retrieves the rendered\npayload via the events API using the subscription/job id returned at\ncreate time.",
         "enum": [
           "webhook",
           "email"
@@ -4527,7 +4832,25 @@
           "SCE",
           "ausländische Rechtsform (GnR)",
           "Stiftung & Co. KG",
-          "eG & Co. KG"
+          "eG & Co. KG",
+          "Einzelunternehmen (CH)",
+          "Kollektivgesellschaft (CH)",
+          "Kommanditgesellschaft (CH)",
+          "Kommanditaktiengesellschaft (CH)",
+          "AG (CH)",
+          "GmbH (CH)",
+          "Genossenschaft (CH)",
+          "Verein (CH)",
+          "Stiftung (CH)",
+          "Zweigniederlassung ausl. Ges. (CH)",
+          "Besondere Rechtsform (CH)",
+          "KmGK (CH)",
+          "SICAV (CH)",
+          "SICAF (CH)",
+          "Institut des öffentlichen Rechts (CH)",
+          "Nichtkaufmännische Prokura (CH)",
+          "Gemeinderschaft (CH)",
+          "Zweigniederlassung (CH)"
         ],
         "title": "Rechtsform",
         "type": "string"
@@ -4854,6 +5177,15 @@
             ],
             "description": "Registered seat address."
           },
+          "country_code": {
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "enum": [
+              "DE",
+              "CH"
+            ],
+            "title": "Country Code",
+            "type": "string"
+          },
           "cpv_award_codes": {
             "description": "CPV (Common Procurement Vocabulary) codes from public-procurement awards.",
             "items": {
@@ -5030,6 +5362,18 @@
             "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
             "title": "Register Type"
           },
+          "registered_seat": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Registered seat as filed (German, may include district).",
+            "title": "Registered Seat"
+          },
           "revenue": {
             "anyOf": [
               {
@@ -5108,6 +5452,7 @@
         },
         "required": [
           "eu_id",
+          "country_code",
           "legal_name",
           "display_name"
         ],
@@ -5640,7 +5985,7 @@
                 "type": "null"
               }
             ],
-            "description": "Delivery transport. **Default: `null`** — async (poll-only).\n\n- `null` — no outbound delivery; the dispatcher records each change as a `subscription_event` and the customer retrieves the rendered payload by polling `GET /v1/subscriptions/{id}/events` using the subscription/job id this request returns. Must omit both `webhook_url` and `recipient_email`.\n- `webhook` — POST a signed JSON body to `webhook_url`. Requires `webhook_url`; rejects `recipient_email`.\n- `email` — SMTP a bilingual notification to `recipient_email`. Requires `recipient_email`; rejects `webhook_url`."
+            "description": "Delivery transport. **Default: `null`** — async (poll-only).\n\n- `null` — no outbound delivery; the dispatcher records each change as a `subscription_event` and the customer retrieves the rendered payload by polling `GET /v1/subscriptions/{id}/events` using the subscription/job id this request returns. Must omit both `webhook_url` and `recipient_email`.\n- `webhook` — POST a signed JSON body to `webhook_url`. Requires `webhook_url`; rejects `recipient_email`.\n- `email` — send a bilingual notification email to `recipient_email`. Requires `recipient_email`; rejects `webhook_url`."
           },
           "recipient_email": {
             "anyOf": [
@@ -5701,7 +6046,7 @@
         "type": "object"
       },
       "SubscriptionCreated": {
-        "description": "Response shape for ``POST /v1/subscriptions``. Identical to\n:class:`Subscription`. For webhook subscriptions it additionally\ncarries the plaintext signing secret — only available here, never\nreturned by any other endpoint. For email subscriptions\n``webhook_secret`` is ``null`` (signatures don't apply to SMTP).",
+        "description": "Response shape for ``POST /v1/subscriptions``. Identical to\n:class:`Subscription`. For webhook subscriptions it additionally\ncarries the plaintext signing secret — only available here, never\nreturned by any other endpoint. For email subscriptions\n``webhook_secret`` is ``null`` (signatures don't apply to email).",
         "properties": {
           "cadence": {
             "anyOf": [
@@ -5887,7 +6232,7 @@
             "type": "boolean"
           },
           "delivery_attempts": {
-            "description": "Number of in-run delivery attempts for this event. Webhook: 0–3 (retried on 5xx / transport errors). Email: 0–1 (SMTP failures wait for the next cadence).",
+            "description": "Number of in-run delivery attempts for this event. Webhook: 0–3 (retried on 5xx / transport errors). Email: 0–1 (send failures wait for the next cadence).",
             "title": "Delivery Attempts",
             "type": "integer"
           },
@@ -6182,7 +6527,7 @@
             "type": "boolean"
           },
           "delivery_attempts": {
-            "description": "Number of in-run delivery attempts for this event. Webhook: 0–3 (retried on 5xx / transport errors). Email: 0–1 (SMTP failures wait for the next cadence).",
+            "description": "Number of in-run delivery attempts for this event. Webhook: 0–3 (retried on 5xx / transport errors). Email: 0–1 (send failures wait for the next cadence).",
             "title": "Delivery Attempts",
             "type": "integer"
           },
@@ -6504,7 +6849,7 @@
             "title": "Receiver Response Excerpt"
           },
           "receiver_succeeded": {
-            "description": "Webhook: the receiver returned a 2xx status. Email: the SMTP server accepted the message.",
+            "description": "Webhook: the receiver returned a 2xx status. Email: the email provider accepted the message.",
             "title": "Receiver Succeeded",
             "type": "boolean"
           },
@@ -7178,7 +7523,7 @@
       "url": "https://firmendata.com/en/terms-and-conditions"
     },
     "title": "firmendata Public API",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -7510,7 +7855,7 @@
             }
           },
           {
-            "description": "Sort direction. Defaults to `desc`.",
+            "description": "Defaults to `desc`, except `asc` for `sort=name`.",
             "in": "query",
             "name": "sort_direction",
             "required": false,
@@ -7523,7 +7868,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Sort direction. Defaults to `desc`.",
+              "description": "Defaults to `desc`, except `asc` for `sort=name`.",
               "title": "Sort Direction"
             }
           },
@@ -7547,6 +7892,45 @@
                 12345
               ],
               "title": "Register Number"
+            }
+          },
+          {
+            "description": "Country of the company register. Single-valued.",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Country"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Country of the company register. Single-valued.",
+              "title": "Country"
+            }
+          },
+          {
+            "description": "Swiss address canton codes. Multi-valued; OR-merged with `bundesland`.",
+            "in": "query",
+            "name": "canton",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Canton"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Swiss address canton codes. Multi-valued; OR-merged with `bundesland`.",
+              "title": "Canton"
             }
           },
           {
@@ -7589,7 +7973,7 @@
             }
           },
           {
-            "description": "Registered seat city, matched exactly but umlaut-insensitively. Multi-valued, and OR-merged with `bundesland` into one location filter.",
+            "description": "Registered seat city, matched exactly but umlaut-insensitively. Compare with `registered_seat` on each hit; `address.city` is the business address and can differ. Multi-valued, and OR-merged with `bundesland` into one location filter.",
             "in": "query",
             "name": "city",
             "required": false,
@@ -7605,7 +7989,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Registered seat city, matched exactly but umlaut-insensitively. Multi-valued, and OR-merged with `bundesland` into one location filter.",
+              "description": "Registered seat city, matched exactly but umlaut-insensitively. Compare with `registered_seat` on each hit; `address.city` is the business address and can differ. Multi-valued, and OR-merged with `bundesland` into one location filter.",
               "examples": [
                 [
                   "München",
@@ -8608,9 +8992,197 @@
         ]
       }
     },
+    "/v1/companies/{eu_id}/documents": {
+      "get": {
+        "description": "Check the German registries live and list register documents,\nincluding older DK versions. This typically takes several seconds.\n\nPass a DK item's `document_id` and its `type` as `file_type` to\n`GET /v1/companies/{eu_id}/documents/download` to download that version.\n`register_extract_current` and `register_extract_chronological` are generated\non request and have no `document_id`; download them by `file_type`.\n`stored` indicates that a copy is already available for immediate download.\n\nWhen the registries are unreachable or the company is no longer listed,\nthe response serves the stored catalog with the outcome in `freshness`.\nUnreachable-registry, unavailable-company and empty answers are not billed.\nSwiss companies return an empty list with `coverage.status=not_applicable`.\nThis endpoint always checks live and accepts no `fetch_realtime` parameter.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "operationId": "listCompanyDocuments",
+        "parameters": [
+          {
+            "description": "firmendata company identifier.",
+            "in": "path",
+            "name": "eu_id",
+            "required": true,
+            "schema": {
+              "description": "firmendata company identifier.",
+              "maxLength": 64,
+              "minLength": 3,
+              "title": "Eu Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDocumentList"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "No company with id DEF1103R.HRB999999B.",
+                  "instance": "/v1/companies/DEF1103R.HRB999999B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 404,
+                  "title": "Resource not found.",
+                  "type": "https://api.firmendata.com/problems/not-found"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "The requested resource does not exist."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "limit: Input should be less than or equal to 50",
+                  "errors": [
+                    {
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
+                    }
+                  ],
+                  "instance": "/v1/companies/search",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 422,
+                  "title": "Request validation failed.",
+                  "type": "https://api.firmendata.com/problems/validation-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Request validation failed; see `errors[]` for per-field details."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "List a company's register documents (live)",
+        "tags": [
+          "Documents"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/companies/DEF1103R.HRB279792B/documents\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/companies/DEF1103R.HRB279792B/documents\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/companies/DEF1103R.HRB279792B/documents\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
     "/v1/companies/{eu_id}/documents/download": {
       "get": {
-        "description": "Resolve one register document for the company and return a\nshort-lived presigned download URL alongside its metadata.\n\n- **`file_type`** — required. One of:\n\n  | `file_type` | German term | Coverage |\n  |---|---|---|\n  | `register_extract_current` | Aktueller Abdruck | Every Handelsregister-registered company. |\n  | `register_extract_chronological` | Chronologischer Abdruck | Every Handelsregister-registered company. |\n  | `shareholder_list` | Liste der Gesellschafter | GmbH and UG (haftungsbeschränkt) only. Companies founded via the simplified procedure (§2 Abs. 1a GmbHG) file no separate Liste — request `model_protocol` instead to download their founding deed. **For parsed cap-table data** (which already auto-falls-back to the Musterprotokoll), call `/companies/{eu_id}/shareholders` rather than this endpoint. |\n  | `articles_of_association` | Gesellschaftsvertrag / Satzung / Statut (the German name varies by legal form: Gesellschaftsvertrag for GmbH/KG/OHG/GbR, Satzung for AG/eG/Verein, Statut for some specific forms) | Most companies — but not those founded via the simplified procedure, which use a Musterprotokoll (`model_protocol`) in place of a constitutional document. |\n  | `company_registration` | Anmeldung | Any newly-registered company. |\n  | `model_protocol` | Musterprotokoll | **Only** companies founded with the simplified procedure under §2 Abs. 1a GmbHG. Legally substitutes for both the constitutional document (Gesellschaftsvertrag / Satzung / Statut) and the Liste der Gesellschafter for those companies — it names the founders and their share allocations directly. |\n\n  Wire values mirror the corresponding `subscription_type` values on\n  `POST /v1/subscriptions`, so a webhook event_type like\n  `articles_of_association.updated` can be passed straight through here\n  to download the file that triggered it.\n- **`file_id`** — optional. When omitted, falls back to the latest published\n  file of the requested type.\n- **`fetch_realtime`** — optional. When `true`, fetch the requested\n  `file_type` from the German registries before resolving the file, so the\n  presigned URL points at the freshest version. Adds upstream latency\n  (typically several seconds). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the response still falls back to the most\n  recent indexed file when realtime fetching fails.\n\nReturns `404` when no matching document is available — the `detail`\nfield distinguishes whether the document is unknown to the German\nregistries, whether the company is no longer present in the registries,\nor whether the registries were unreachable. A `404` costs no credits. The\n`download_url` is valid for 1 day; refetch this endpoint to obtain a new\nURL when it expires.\n\n`is_outdated` flags a register extract older than the company's latest\nregister entry; request it with `fetch_realtime=true` for a current copy.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Resolve one register document for the company and return a\nshort-lived presigned download URL alongside its metadata.\n\n- **`file_type`** — required. One of:\n\n  | `file_type` | German term | Coverage |\n  |---|---|---|\n  | `register_extract_current` | Aktueller Abdruck | Every Handelsregister-registered company. |\n  | `register_extract_chronological` | Chronologischer Abdruck | Every Handelsregister-registered company. |\n  | `shareholder_list` | Liste der Gesellschafter | GmbH and UG (haftungsbeschränkt) only. Companies founded via the simplified procedure (§2 Abs. 1a GmbHG) file no separate Liste — request `model_protocol` instead to download their founding deed. **For parsed cap-table data** (which already auto-falls-back to the Musterprotokoll), call `/companies/{eu_id}/shareholders` rather than this endpoint. |\n  | `articles_of_association` | Gesellschaftsvertrag / Satzung / Statut (the German name varies by legal form: Gesellschaftsvertrag for GmbH/KG/OHG/GbR, Satzung for AG/eG/Verein, Statut for some specific forms) | Most companies — but not those founded via the simplified procedure, which use a Musterprotokoll (`model_protocol`) in place of a constitutional document. |\n  | `company_registration` | Anmeldung | Any newly-registered company. |\n  | `model_protocol` | Musterprotokoll | **Only** companies founded with the simplified procedure under §2 Abs. 1a GmbHG. Legally substitutes for both the constitutional document (Gesellschaftsvertrag / Satzung / Statut) and the Liste der Gesellschafter for those companies — it names the founders and their share allocations directly. |\n\n  Wire values mirror the corresponding `subscription_type` values on\n  `POST /v1/subscriptions`, so a webhook event_type like\n  `articles_of_association.updated` can be passed straight through here\n  to download the file that triggered it.\n- **`file_id`** — optional. When omitted, falls back to the latest published\n  file of the requested type.\n- **`document_id`** — optional catalog identifier (`doc_<int>`) from\n  `GET /v1/companies/{eu_id}/documents`. Downloads that specific DK version,\n  including older versions, fetching it on demand when no stored copy exists.\n  `file_type` must match. Cannot be combined with `file_id` or\n  `fetch_realtime=true`. Register extracts have no catalog identifier;\n  request them by `file_type`.\n- **`fetch_realtime`** — optional. When `true`, fetch the requested\n  `file_type` from the German registries before resolving the file, so the\n  presigned URL points at the freshest version. Adds upstream latency\n  (typically several seconds). Failures are surfaced via\n  `freshness.realtime_fetching_status`; the response still falls back to the most\n  recent indexed file when realtime fetching fails.\n\nReturns `404` when no matching document is available — the `detail`\nfield distinguishes whether the document is unknown to the German\nregistries, whether the company is no longer present in the registries,\nor whether the registries were unreachable. A `404` costs no credits. The\n`download_url` is valid for 1 day; refetch this endpoint to obtain a new\nURL when it expires.\n\n`is_outdated` flags a register extract older than the company's latest\nregister entry; request it with `fetch_realtime=true` for a current copy.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "downloadCompanyDocument",
         "parameters": [
           {
@@ -8667,6 +9239,25 @@
                 "file_12345"
               ],
               "title": "File Id"
+            }
+          },
+          {
+            "description": "Specific DK catalog version from the live document list. Cannot be combined with `file_id` or `fetch_realtime=true`.",
+            "in": "query",
+            "name": "document_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^doc_[0-9]+$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Specific DK catalog version from the live document list. Cannot be combined with `file_id` or `fetch_realtime=true`.",
+              "title": "Document Id"
             }
           },
           {
@@ -10948,7 +11539,7 @@
     },
     "/v1/subscriptions/test": {
       "post": {
-        "description": "Send one **real** sample notification — webhook **or** email — using\nthe same rendering, signing, and delivery path as production. **No\nsubscription is created**, no DB row is written, and no scrape runs.\nSafe and cheap to call repeatedly from your CI / integration tests.\n\nPick the transport via `notification_type`:\n\n* **`webhook`** — POSTs a signed JSON body to `webhook_url`. The\n  request is always signed with the documented public test secret\n  `firmendata_test_secret_do_not_use_in_production`. The HMAC recipe\n  is identical to production, so any verification code that matches\n  with this constant will also match a real per-subscription secret.\n  Hard-code it in your unit tests; never reuse it for real\n  subscriptions.\n* **`email`** — composes the bilingual change-notification email\n  (subject + HTML body) and SMTPs it to `recipient_email`. Subject\n  is prefixed with `[TEST]`; the body carries an explicit \"this is a\n  test\" banner so a human reading the inbox can't mistake it for a\n  live update. For `doc_*` subscription types the response also\n  attaches a tiny on-the-fly **sample PDF** so the customer's\n  attachment-handling pipeline (parse Content-Type, save to disk,\n  forward to S3, …) can be exercised end to end. In production the\n  attachment is the real register PDF.\n\nNo retries — this is a fail-fast probe. The receiver's status, error\ndetail, and the exact bytes / headers / subject / body firmendata\nsent are all returned, so you can diff them against your verification\nroutine offline if your endpoint isn't yet live.\n\n`subscription_type` controls the payload shape, summary copy, and —\nfor `doc_*` types — the embedded download URL / file metadata block,\nidentical to what a real notification carries. `eu_id` is embedded in\nthe payload but does **not** need to be known to firmendata.\n\n## Webhook payload faithfulness\n\nTop-level `publish_date` and `links` are present on every delivery.\nThe per-type `data` block matches a production change delivery for\nthe same `subscription_type`:\n\n* Parsed-data types (`details`, `history`, `shareholders`, `ubo`)\n  deliver the **same response shape as the corresponding\n  `GET /v1/companies/{eu_id}[/...]` endpoint**. When the\n  `eu_id` you pass is known to firmendata the test endpoint embeds the\n  real current data; when it does not, `data` is a sparse placeholder\n  containing only `{eu_id}` — the field set is what varies, the schema\n  does not.\n* `doc_*` types deliver `{url, expires_at, file_id, file_type,\n  fetched_at}` directly under `data`. In test mode the `url` points at\n  the v1 documents endpoint (clearly identifiable as a test artifact);\n  in production it is a 7-day presigned URL to the real document.\n\nThe only top-level difference between test and production is an extra\n`_meta: {\"test\": true}` key — receivers that ignore unknown top-level\nkeys (recommended) need no test branch at all. The `subscription_id`\nis a freshly-minted UUID, not a real id; treat it as opaque.\n\n## Integration-test scenarios\n\nWebhook only — pick via `delivery_scenario`:\n\n* `success` (default) — single signed POST. Receiver should return 2xx.\n* `retry_delivery` — two POSTs back-to-back with byte-identical body,\n  signature, timestamp, and `X-Firmendata-Delivery-Id`. Mirrors how\n  production retries look after a 5xx so you can verify your\n  idempotent dedupe.\n* `bad_signature` — single POST signed with a wrong secret. Your\n  endpoint SHOULD reject with 4xx; that is the test passing.\n* `stale_timestamp` — single POST whose `X-Firmendata-Timestamp` is\n  10 minutes in the past. Your endpoint SHOULD reject with 4xx; that\n  is the test passing.\n\nPer-attempt detail (status, signature, timestamp, response excerpt)\nis returned in `attempts[]` regardless of scenario.\n\n## Sample receiver\n\nA minimal listener that verifies the signature and prints the body —\ndrop into your test harness, point your `webhook_url` at it, and call\nthis endpoint to drive it.\n\n### Python (Flask)\n\n```python\n# pip install flask\nimport hashlib\nimport hmac\nimport json\nfrom flask import Flask, abort, request\n\nWEBHOOK_SECRET = \"firmendata_test_secret_do_not_use_in_production\"\nMAX_TIMESTAMP_SKEW_SECONDS = 5 * 60\n\napp = Flask(__name__)\n\n\n@app.post(\"/firmendata/webhook\")\ndef receive_webhook():\n    raw = request.get_data()\n    sig = request.headers.get(\"X-Firmendata-Signature\", \"\")\n    ts = request.headers.get(\"X-Firmendata-Timestamp\", \"\")\n\n    expected = \"sha256=\" + hmac.new(\n        WEBHOOK_SECRET.encode(),\n        f\"{ts}.\".encode() + raw,\n        hashlib.sha256,\n    ).hexdigest()\n    if not hmac.compare_digest(sig, expected):\n        abort(401)\n\n    # Replay protection — reject anything older than 5 minutes.\n    import time\n    if abs(int(time.time()) - int(ts or 0)) > MAX_TIMESTAMP_SKEW_SECONDS:\n        abort(401)\n\n    payload = json.loads(raw)\n    print(\n        f\"[{payload['event_type']}] eu_id={payload['eu_id']} \"\n        f\"delivery_id={request.headers['X-Firmendata-Delivery-Id']}\"\n    )\n    print(json.dumps(payload, indent=2))\n    return (\"\", 200)\n\n\nif __name__ == \"__main__\":\n    app.run(port=8080)\n```\n\n### Node.js (Express)\n\n```js\n// npm install express\nimport crypto from \"node:crypto\";\nimport express from \"express\";\n\nconst WEBHOOK_SECRET = \"firmendata_test_secret_do_not_use_in_production\";\nconst MAX_TIMESTAMP_SKEW_SECONDS = 5 * 60;\n\nconst app = express();\n\napp.post(\n  \"/firmendata/webhook\",\n  express.raw({ type: \"application/json\" }),\n  (req, res) => {\n    const sig = req.header(\"X-Firmendata-Signature\") ?? \"\";\n    const ts = req.header(\"X-Firmendata-Timestamp\") ?? \"\";\n\n    const expected =\n      \"sha256=\" +\n      crypto\n        .createHmac(\"sha256\", WEBHOOK_SECRET)\n        .update(`${ts}.${req.body.toString()}`)\n        .digest(\"hex\");\n    const sigBuf = Buffer.from(sig);\n    const expBuf = Buffer.from(expected);\n    if (\n      sigBuf.length !== expBuf.length ||\n      !crypto.timingSafeEqual(sigBuf, expBuf)\n    ) {\n      return res.status(401).end();\n    }\n\n    if (Math.abs(Math.floor(Date.now() / 1000) - Number(ts || 0)) >\n        MAX_TIMESTAMP_SKEW_SECONDS) {\n      return res.status(401).end();\n    }\n\n    const payload = JSON.parse(req.body.toString());\n    console.log(\n      `[${payload.event_type}] eu_id=${payload.eu_id} ` +\n        `delivery_id=${req.header(\"X-Firmendata-Delivery-Id\")}`\n    );\n    console.log(JSON.stringify(payload, null, 2));\n    res.status(200).end();\n  }\n);\n\napp.listen(8080);\n```\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Send one **real** sample notification — webhook **or** email — using\nthe same rendering, signing, and delivery path as production. **No\nsubscription is created**, no DB row is written, and no scrape runs.\nSafe and cheap to call repeatedly from your CI / integration tests.\n\nPick the transport via `notification_type`:\n\n* **`webhook`** — POSTs a signed JSON body to `webhook_url`. The\n  request is always signed with the documented public test secret\n  `firmendata_test_secret_do_not_use_in_production`. The HMAC recipe\n  is identical to production, so any verification code that matches\n  with this constant will also match a real per-subscription secret.\n  Hard-code it in your unit tests; never reuse it for real\n  subscriptions.\n* **`email`** — composes the bilingual change-notification email\n  (subject + HTML body) and sends it to `recipient_email`. Subject\n  is prefixed with `[TEST]`; the body carries an explicit \"this is a\n  test\" banner so a human reading the inbox can't mistake it for a\n  live update. For `doc_*` subscription types the response also\n  attaches a tiny on-the-fly **sample PDF** so the customer's\n  attachment-handling pipeline (parse Content-Type, save to disk,\n  forward to S3, …) can be exercised end to end. In production the\n  attachment is the real register PDF.\n\nNo retries — this is a fail-fast probe. The receiver's status, error\ndetail, and the exact bytes / headers / subject / body firmendata\nsent are all returned, so you can diff them against your verification\nroutine offline if your endpoint isn't yet live.\n\n`subscription_type` controls the payload shape, summary copy, and —\nfor `doc_*` types — the embedded download URL / file metadata block,\nidentical to what a real notification carries. `eu_id` is embedded in\nthe payload but does **not** need to be known to firmendata.\n\n## Webhook payload faithfulness\n\nTop-level `publish_date` and `links` are present on every delivery.\nThe per-type `data` block matches a production change delivery for\nthe same `subscription_type`:\n\n* Parsed-data types (`details`, `history`, `shareholders`, `ubo`)\n  deliver the **same response shape as the corresponding\n  `GET /v1/companies/{eu_id}[/...]` endpoint**. When the\n  `eu_id` you pass is known to firmendata the test endpoint embeds the\n  real current data; when it does not, `data` is a sparse placeholder\n  containing only `{eu_id}` — the field set is what varies, the schema\n  does not.\n* `doc_*` types deliver `{url, expires_at, file_id, file_type,\n  fetched_at}` directly under `data`. In test mode the `url` points at\n  the v1 documents endpoint (clearly identifiable as a test artifact);\n  in production it is a 7-day presigned URL to the real document.\n\nThe only top-level difference between test and production is an extra\n`_meta: {\"test\": true}` key — receivers that ignore unknown top-level\nkeys (recommended) need no test branch at all. The `subscription_id`\nis a freshly-minted UUID, not a real id; treat it as opaque.\n\n## Integration-test scenarios\n\nWebhook only — pick via `delivery_scenario`:\n\n* `success` (default) — single signed POST. Receiver should return 2xx.\n* `retry_delivery` — two POSTs back-to-back with byte-identical body,\n  signature, timestamp, and `X-Firmendata-Delivery-Id`. Mirrors how\n  production retries look after a 5xx so you can verify your\n  idempotent dedupe.\n* `bad_signature` — single POST signed with a wrong secret. Your\n  endpoint SHOULD reject with 4xx; that is the test passing.\n* `stale_timestamp` — single POST whose `X-Firmendata-Timestamp` is\n  10 minutes in the past. Your endpoint SHOULD reject with 4xx; that\n  is the test passing.\n\nPer-attempt detail (status, signature, timestamp, response excerpt)\nis returned in `attempts[]` regardless of scenario.\n\n## Sample receiver\n\nA minimal listener that verifies the signature and prints the body —\ndrop into your test harness, point your `webhook_url` at it, and call\nthis endpoint to drive it.\n\n### Python (Flask)\n\n```python\n# pip install flask\nimport hashlib\nimport hmac\nimport json\nfrom flask import Flask, abort, request\n\nWEBHOOK_SECRET = \"firmendata_test_secret_do_not_use_in_production\"\nMAX_TIMESTAMP_SKEW_SECONDS = 5 * 60\n\napp = Flask(__name__)\n\n\n@app.post(\"/firmendata/webhook\")\ndef receive_webhook():\n    raw = request.get_data()\n    sig = request.headers.get(\"X-Firmendata-Signature\", \"\")\n    ts = request.headers.get(\"X-Firmendata-Timestamp\", \"\")\n\n    expected = \"sha256=\" + hmac.new(\n        WEBHOOK_SECRET.encode(),\n        f\"{ts}.\".encode() + raw,\n        hashlib.sha256,\n    ).hexdigest()\n    if not hmac.compare_digest(sig, expected):\n        abort(401)\n\n    # Replay protection — reject anything older than 5 minutes.\n    import time\n    if abs(int(time.time()) - int(ts or 0)) > MAX_TIMESTAMP_SKEW_SECONDS:\n        abort(401)\n\n    payload = json.loads(raw)\n    print(\n        f\"[{payload['event_type']}] eu_id={payload['eu_id']} \"\n        f\"delivery_id={request.headers['X-Firmendata-Delivery-Id']}\"\n    )\n    print(json.dumps(payload, indent=2))\n    return (\"\", 200)\n\n\nif __name__ == \"__main__\":\n    app.run(port=8080)\n```\n\n### Node.js (Express)\n\n```js\n// npm install express\nimport crypto from \"node:crypto\";\nimport express from \"express\";\n\nconst WEBHOOK_SECRET = \"firmendata_test_secret_do_not_use_in_production\";\nconst MAX_TIMESTAMP_SKEW_SECONDS = 5 * 60;\n\nconst app = express();\n\napp.post(\n  \"/firmendata/webhook\",\n  express.raw({ type: \"application/json\" }),\n  (req, res) => {\n    const sig = req.header(\"X-Firmendata-Signature\") ?? \"\";\n    const ts = req.header(\"X-Firmendata-Timestamp\") ?? \"\";\n\n    const expected =\n      \"sha256=\" +\n      crypto\n        .createHmac(\"sha256\", WEBHOOK_SECRET)\n        .update(`${ts}.${req.body.toString()}`)\n        .digest(\"hex\");\n    const sigBuf = Buffer.from(sig);\n    const expBuf = Buffer.from(expected);\n    if (\n      sigBuf.length !== expBuf.length ||\n      !crypto.timingSafeEqual(sigBuf, expBuf)\n    ) {\n      return res.status(401).end();\n    }\n\n    if (Math.abs(Math.floor(Date.now() / 1000) - Number(ts || 0)) >\n        MAX_TIMESTAMP_SKEW_SECONDS) {\n      return res.status(401).end();\n    }\n\n    const payload = JSON.parse(req.body.toString());\n    console.log(\n      `[${payload.event_type}] eu_id=${payload.eu_id} ` +\n        `delivery_id=${req.header(\"X-Firmendata-Delivery-Id\")}`\n    );\n    console.log(JSON.stringify(payload, null, 2));\n    res.status(200).end();\n  }\n);\n\napp.listen(8080);\n```\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "testDelivery",
         "requestBody": {
           "content": {
@@ -11720,7 +12311,7 @@
   ],
   "tags": [
     {
-      "description": "Find companies by free-text query and firmographic filters. Use `autocomplete` for fast suggestions and `search` for programmatic, filterable lookups.\n\n### Filter values\n\nEnum values are **case-insensitive** and tolerate the umlaut spellings German text arrives in, so `gmbh`, `muenchen` and `Baden-Wurttemberg` all resolve. Common abbreviations and alternative names work too (`NRW`, `Bavaria`, `Charlottenburg`, `Amtsgericht München`). A value that could mean two different things is rejected rather than guessed at — `Frankfurt` names two courts, so spell out `Frankfurt am Main` or `Frankfurt/Oder`. Unknown values and unknown parameter names are rejected with `422` too, never silently ignored.\n\n### Repeating a filter\n\nFilters that accept several values (`city`, `bundesland`, `rechtsform`, `wz_2025_code`, `industry_slug`, `legal_status`, `membership`, `tender_role`) OR-merge their values and accept any of the three encodings HTTP clients produce:\n\n```\n?rechtsform=GmbH&rechtsform=AG     repeated key\n?rechtsform=GmbH,AG                comma-separated\n?rechtsform[]=GmbH&rechtsform[]=AG bracket / indexed\n```\n\nDifferent filters are AND-merged. `city` and `bundesland` are the one exception: they form a single location filter, so a company matches when it is in any selected city **or** any selected federal state.\n\n### Reading the financials\n\nEach figure is resolved to the most recent filing that actually carries it, so they can come from *different* fiscal years — `revenue_year`, `profit_year`, `total_assets_year` and `employee_count_year` say which. Don't assume two of them share a year when computing a ratio. `financial_year` is a separate thing: the latest year the company filed anything at all.\n\nCoverage differs sharply between the metrics, and it is not a data-quality gap — it follows German filing law. Small and medium-sized companies file abridged accounts under §§ 266, 276 HGB: a balance sheet, but no profit-and-loss statement, and no headcount. So the balance-sheet total is available for far more companies than revenue or employees are. **If you are filtering on company size, use `total_assets_min` / `total_assets_max` — the revenue bounds reach only the minority that publish a full P&L.**",
+      "description": "Find companies by free-text query and firmographic filters. Use `autocomplete` for fast suggestions and `search` for programmatic, filterable lookups.\n\n### Filter values\n\nEnum values are **case-insensitive** and tolerate the umlaut spellings German text arrives in, so `gmbh`, `muenchen` and `Baden-Wurttemberg` all resolve. Common abbreviations and alternative names work too (`NRW`, `Bavaria`, `Charlottenburg`, `Amtsgericht München`). A value that could mean two different things is rejected rather than guessed at — `Frankfurt` names two courts, so spell out `Frankfurt am Main` or `Frankfurt/Oder`. Unknown values and unknown parameter names are rejected with `422` too, never silently ignored.\n\n### Repeating a filter\n\nFilters that accept several values (`city`, `bundesland`, `canton`, `rechtsform`, `wz_2025_code`, `industry_slug`, `legal_status`, `membership`, `tender_role`) OR-merge their values and accept any of the three encodings HTTP clients produce:\n\n```\n?rechtsform=GmbH&rechtsform=AG     repeated key\n?rechtsform=GmbH,AG                comma-separated\n?rechtsform[]=GmbH&rechtsform[]=AG bracket / indexed\n```\n\nDifferent filters are AND-merged. `city`, `bundesland` and `canton` are the one exception: they form a single location filter, so a company matches when it is in any selected city **or** any selected federal state or canton.\n\n### Reading the financials\n\nEach figure is resolved to the most recent filing that actually carries it, so they can come from *different* fiscal years — `revenue_year`, `profit_year`, `total_assets_year` and `employee_count_year` say which. Don't assume two of them share a year when computing a ratio. `financial_year` is a separate thing: the latest year the company filed anything at all.\n\nCoverage differs sharply between the metrics, and it is not a data-quality gap — it follows German filing law. Small and medium-sized companies file abridged accounts under §§ 266, 276 HGB: a balance sheet, but no profit-and-loss statement, and no headcount. So the balance-sheet total is available for far more companies than revenue or employees are. **If you are filtering on company size, use `total_assets_min` / `total_assets_max` — the revenue bounds reach only the minority that publish a full P&L.**",
       "name": "Search"
     },
     {

@@ -15,6 +15,7 @@ from .types import (
     AutocompleteResponse,
     CompanyDetail,
     CompanyDocumentDownload,
+    CompanyDocumentList,
     CompanyFinancials,
     CompanyHistory,
     SearchResponse,
@@ -162,10 +163,11 @@ class FirmenData(_BaseClient):
         )
 
     def search(self, **filters: Unpack[SearchFilters]) -> SearchResponse:
-        """Advanced search over the German commercial register.
+        """Advanced search over the German and Swiss commercial registers.
 
-        Every filter is optional and they combine with AND. Array filters
-        take a list and combine with OR within themselves::
+        Every filter is optional. Different filters combine with AND;
+        ``city``, ``bundesland`` and ``canton`` form one OR location filter.
+        Array filters take a list and combine with OR within themselves::
 
             fd.search(city=["Berlin", "Hamburg"], revenue_min=1_000_000)
 
@@ -222,20 +224,31 @@ class FirmenData(_BaseClient):
             params={"fetch_realtime": fetch_realtime},
         )
 
+    def list_documents(self, eu_id: str) -> CompanyDocumentList:
+        """Check the registry live and list documents, including older DK versions."""
+        return self._request("GET", f"/v1/companies/{_segment(eu_id)}/documents")
+
     def download_document(
             self,
             eu_id: str,
             *,
             file_type: str,
             file_id: str | None = None,
+            document_id: str | None = None,
             fetch_realtime: bool = False,
     ) -> CompanyDocumentDownload:
-        """Presigned download URL for a register document."""
+        """Presigned download URL for a register document.
+
+        Pass ``document_id`` from :meth:`list_documents` for a specific DK
+        version, with its matching ``file_type``. It cannot be combined with
+        ``file_id`` or ``fetch_realtime=True``. Omit it for the latest version.
+        """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/documents/download",
             params={
                 "file_type": file_type,
                 "file_id": file_id,
+                "document_id": document_id,
                 "fetch_realtime": fetch_realtime,
             },
         )

@@ -41,6 +41,35 @@ def client_with(handler, **kw) -> FirmenData:
     )
 
 
+@pytest.fixture(params=["DE", "CH"])
+def document_list(request):
+    country = request.param
+    return {
+        "object": "company_document_list",
+        "eu_id": f"{country}1",
+        "country_code": country,
+        "coverage": {"status": "available" if country == "DE" else "not_applicable"},
+        "freshness": {
+            "last_checked_at": "2026-10-01T12:00:00Z" if country == "DE" else None,
+            "realtime_fetching_status": "success" if country == "DE" else "skipped_not_applicable",
+        },
+        "data": [{
+            "document_id": "doc_123",
+            "type": "shareholder_list",
+            "type_label_de": "Liste der Gesellschafter",
+            "type_label_en": "Shareholder List",
+            "label": "Liste der Gesellschafter vom 2025-01-01",
+            "document_date": "2025-01-01",
+            "published_at": "2025-01-02",
+            "is_latest": False,
+            "stored": False,
+            "file_id": None,
+            "fetched_at": None,
+            "is_outdated": False,
+        }] if country == "DE" else [],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Request shaping
 # ---------------------------------------------------------------------------
@@ -88,6 +117,56 @@ class TestRequestShaping:
             "DE1", file_type="Bilanz", file_id=None,
         )
         assert "file_id" not in seen["url"]
+        assert "document_id" not in seen["url"]
+
+    def test_list_documents(self, document_list):
+        def handler(request):
+            assert request.method == "GET"
+            assert request.url.path == f"/v1/companies/{document_list['eu_id']}/documents"
+            assert not request.url.params
+            assert request.headers["authorization"] == "Bearer k"
+            return httpx.Response(200, json=document_list)
+
+        result = client_with(handler, api_key="k").list_documents(document_list["eu_id"])
+        assert result == document_list
+
+    def test_list_documents_encodes_the_company_id(self):
+        def handler(request):
+            assert request.url.raw_path == b"/v1/companies/DE%2F1%3Fq%3Dx/documents"
+            return httpx.Response(200, json={})
+
+        client_with(handler, api_key="k").list_documents("DE/1?q=x")
+
+    @pytest.mark.parametrize("document_id", [None, "doc_123"])
+    def test_download_document_version(self, document_id):
+        response = {"document_id": document_id, "label": "Liste der Gesellschafter"}
+
+        def handler(request):
+            assert request.method == "GET"
+            assert request.url.path == "/v1/companies/DE1/documents/download"
+            expected = {"file_type": "shareholder_list", "fetch_realtime": "false"}
+            if document_id is not None:
+                expected["document_id"] = document_id
+            assert dict(request.url.params) == expected
+            return httpx.Response(200, json=response)
+
+        result = client_with(handler, api_key="k").download_document(
+            "DE1", file_type="shareholder_list", document_id=document_id,
+        )
+        assert result == response
+
+    def test_swiss_search_filters(self):
+        def handler(request):
+            assert request.url.params["country"] == "CH"
+            assert request.url.params.get_list("canton") == ["ZH", "BE"]
+            assert request.url.params.get_list("rechtsform") == ["AG (CH)", "GmbH (CH)"]
+            assert request.url.params["sort"] == "name"
+            assert "sort_direction" not in request.url.params
+            return httpx.Response(200, json={"data": []})
+
+        client_with(handler, api_key="k").search(
+            country="CH", canton=["ZH", "BE"], rechtsform=["AG (CH)", "GmbH (CH)"], sort="name",
+        )
 
     def test_list_filters_repeat_the_key(self):
         """`?city=Berlin&city=Hamburg` is what the API parses — not a
@@ -279,6 +358,43 @@ class TestRetryPolicy:
 # ---------------------------------------------------------------------------
 
 class TestAsyncClient:
+    async def test_list_documents(self, document_list):
+        def handler(request):
+            assert request.method == "GET"
+            assert request.url.path == f"/v1/companies/{document_list['eu_id']}/documents"
+            assert not request.url.params
+            assert request.headers["authorization"] == "Bearer k"
+            return httpx.Response(200, json=document_list)
+
+        async with AsyncFirmenData(
+            api_key="k",
+            http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        ) as fd:
+            result = await fd.list_documents(document_list["eu_id"])
+        assert result == document_list
+
+    @pytest.mark.parametrize("document_id", [None, "doc_123"])
+    async def test_download_document_version(self, document_id):
+        response = {"document_id": document_id, "label": "Liste der Gesellschafter"}
+
+        def handler(request):
+            assert request.method == "GET"
+            assert request.url.path == "/v1/companies/DE1/documents/download"
+            expected = {"file_type": "shareholder_list", "fetch_realtime": "false"}
+            if document_id is not None:
+                expected["document_id"] = document_id
+            assert dict(request.url.params) == expected
+            return httpx.Response(200, json=response)
+
+        async with AsyncFirmenData(
+            api_key="k",
+            http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+        ) as fd:
+            result = await fd.download_document(
+                "DE1", file_type="shareholder_list", document_id=document_id,
+            )
+        assert result == response
+
     async def test_autocomplete_without_a_key(self):
         def handler(request):
             assert request.headers.get("authorization") is None
