@@ -25,6 +25,9 @@ for hit in FirmenData().autocomplete("siemens")["data"]:
     print(hit["eu_id"], hit["display_name"])
 ```
 
+Optionally pass `country="DE"`, `"CH"` or `"AT"` to restrict autocomplete
+to one company register; omitting it searches all countries.
+
 Keyless calls are rate limited, modestly and by address — enough to try the
 API, back a search box, or run low-volume queries. Add a key for substantially
 higher limits plus every other endpoint. On a `429`, honour `Retry-After`;
@@ -79,7 +82,7 @@ Use `country="DE"` or `country="CH"` for a single country and
 `canton=["ZH", "BE"]` for Swiss cantons. `rechtsform` includes Swiss forms
 such as `"AG (CH)"` and `"GmbH (CH)"`. `sort="name"` defaults to ascending.
 Search hits include `registered_seat`; company profiles, search and
-autocomplete hits include `country_code` (`"DE"` or `"CH"`).
+autocomplete hits include `country_code` (`"DE"`, `"CH"` or `"AT"`).
 
 > **Filtering on size? Use `total_assets`, not `revenue`.** Small and
 > medium-sized German companies file abridged accounts — a balance sheet, but
@@ -211,6 +214,78 @@ print(ubo["coverage"]["status"], ubo["beneficial_owners"])
   independently tested against the 25% threshold, so a sub-threshold link
   breaks the chain entirely.
 
+## Event feeds (Beta)
+
+Poll newly discovered companies with `feed_new_companies(**filters)` or
+insolvency notices with `feed_insolvencies(**filters)`. Both require an API
+key and return `data` (a list of `FeedEvent` dictionaries), `next_cursor`
+(always present) and `has_more` at the top level.
+
+```python
+page = fd.feed_new_companies(country="DE", limit=50)
+for event in page["data"]:
+    print(event["id"], event["company"].get("name"))
+
+next_cursor = page["next_cursor"]  # persist this, even when data is empty
+page = fd.feed_new_companies(country="DE", cursor=next_cursor, limit=50)
+```
+
+Pass `next_cursor` back unchanged with the same filters. When `has_more` is
+true, request the next page immediately; otherwise poll again later. On the
+first call only, `since` accepts an ISO datetime within the last seven days;
+omitting it starts from the last day. `limit` is 1–100 and defaults to 50.
+Cursors survive restarts and deploys, but discovery positions older than
+seven days expire; restart with a recent `since`. Each page with events costs
+1 credit; empty pages are free. Events arrive in discovery order after a
+settlement delay.
+
+Both feeds accept `country` (`DE`, `CH` or `AT`), `bundesland`, `canton`,
+`industry_slug` and `rechtsform`. List filters repeat query keys and match
+with OR. Insolvencies default to `country="DE"` and also accept `category`,
+`revenue_min` (inclusive) and `revenue_max` (exclusive). Swiss new-company
+events come from the SHAB new-company scanner; Swiss Schuldenruf notices
+require an explicit category selection:
+
+```python
+page = fd.feed_insolvencies(country="CH", canton=["ZH"], category=["Schuldenruf"])
+```
+
+Use `iter_feed_new_companies` or `iter_feed_insolvencies` to drain available
+pages automatically. They stop when `has_more` is false and expose
+`.next_cursor` for the last fully consumed page, including empty pages:
+
+```python
+events = fd.iter_feed_new_companies(country="DE", limit=100)
+for event in events:
+    print(event["id"], event["company"].get("name"))
+
+next_cursor = events.next_cursor  # persist after processing all events
+assert next_cursor is not None   # available after successful exhaustion
+# On the next scheduled poll:
+events = fd.iter_feed_new_companies(country="DE", cursor=next_cursor, limit=100)
+```
+
+The cursor starts at the supplied cursor (or `None`) and advances when
+iteration continues past a page's events. If processing stops partway through
+a page, the checkpoint stays at that page's starting position so it can be
+replayed. Iterators deduplicate event `id` values within one run; persist
+processed IDs across polls and restarts too, because a reparse can resurface
+an ID. Save a cursor only after successfully processing its page's events.
+
+Async clients have the same page methods with `await`. Create async feed
+iterators without `await`, consume them with `async for`, then save their
+`.next_cursor`:
+
+```python
+from firmendata import AsyncFirmenData
+
+async with AsyncFirmenData(api_key="firmendata_live_...") as fd:
+    events = fd.iter_feed_insolvencies(country="DE")
+    async for event in events:
+        print(event["id"], event["company"].get("name"))
+    next_cursor = events.next_cursor
+```
+
 ## Subscriptions
 
 Get notified when a company's data changes, instead of polling:
@@ -231,7 +306,8 @@ the secret returned at creation. Omit `notification_type` to poll
 
 ## Async
 
-Same methods, same semantics — every method above has an `await`able twin:
+Same methods, same semantics — request methods have an `await`able twin,
+and feed iterators use `async for`:
 
 ```python
 import asyncio

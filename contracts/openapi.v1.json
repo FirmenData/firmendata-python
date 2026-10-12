@@ -18,7 +18,7 @@
           },
           "country_code": {
             "default": "DE",
-            "description": "ISO 3166-1 alpha-2 country code of the address: `DE` or `CH`.",
+            "description": "ISO 3166-1 alpha-2 country code of the address: `DE`, `CH` or `AT`.",
             "title": "Country Code",
             "type": "string"
           },
@@ -31,7 +31,7 @@
                 "type": "null"
               }
             ],
-            "description": "State the address lies in: the Bundesland for a German address, the canton (official name, e.g. `Zug`, `Genève`) for a Swiss one. Read from the address itself, so it can differ from the canton of a Swiss company's register office (`register_canton`). `null` when the address does not determine it.",
+            "description": "State the address lies in: the Bundesland for a German address, the canton (official name, e.g. `Zug`, `Genève`) for a Swiss one, the Bundesland (e.g. `Salzburg`) for an Austrian one. Read from the address itself, so it can differ from the canton of a Swiss company's register office (`register_canton`). `null` when the address does not determine it.",
             "title": "Federal State"
           },
           "formatted_display": {
@@ -181,7 +181,7 @@
                 "type": "null"
               }
             ],
-            "description": "Fiscal year of the filing the insights were generated from. Compare it with `financial_summary.latest_fiscal_year`: an outlook written from an older filing describes that year's view.",
+            "description": "Fiscal year of the filing the insights were generated from. The outlook is omitted when this year is two or more years older than `financial_summary.latest_fiscal_year`.",
             "title": "Based On Fiscal Year"
           },
           "generated_at": {
@@ -213,7 +213,7 @@
                 "type": "null"
               }
             ],
-            "description": "Forward-looking outlook, localized."
+            "description": "Forward-looking outlook, localized. Omitted when based on a fiscal year two or more years older than the latest financial statements."
           },
           "summary": {
             "anyOf": [
@@ -319,10 +319,11 @@
         "description": "One autocomplete suggestion.",
         "properties": {
           "country_code": {
-            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register, `AT` for the Austrian Firmenbuch.",
             "enum": [
               "DE",
-              "CH"
+              "CH",
+              "AT"
             ],
             "title": "Country Code",
             "type": "string"
@@ -358,7 +359,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German and Austrian companies.",
             "examples": [
               "VD"
             ],
@@ -373,7 +374,7 @@
                 "type": "null"
               }
             ],
-            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
+            "description": "Registering court (Registergericht, Firmenbuchgericht) for German and Austrian companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -400,7 +401,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`, `AT-FB`).",
             "title": "Register Type"
           },
           "uid": {
@@ -412,7 +413,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German and Austrian companies.",
             "examples": [
               "CHE-105.909.036"
             ],
@@ -462,6 +463,350 @@
           }
         },
         "title": "AutocompleteResponse",
+        "type": "object"
+      },
+      "BalanceSheetPositions": {
+        "description": "Top-level balance-sheet positions for one fiscal year (§ 266 HGB).\n\nTaken from the same filing as the year's line items; a position the\nfiling does not show is `null`. Small companies file a shortened balance\nsheet, so the sub-positions are often missing while the totals are there.\nEvery row at every depth is in `history.assets` / `liabilities_and_equity`.",
+        "properties": {
+          "capital_reserves": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Kapitalrücklage (within Eigenkapital)."
+          },
+          "cash": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Kassenbestand, Bundesbankguthaben, Guthaben bei Kreditinstituten und Schecks."
+          },
+          "current_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Umlaufvermögen."
+          },
+          "deferred_income": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Passive Rechnungsabgrenzungsposten."
+          },
+          "deferred_tax_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Aktive latente Steuern."
+          },
+          "deferred_tax_liabilities": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Passive latente Steuern."
+          },
+          "deficit_not_covered_by_equity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nicht durch Eigenkapital gedeckter Fehlbetrag (shown on the assets side when equity is negative)."
+          },
+          "equity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Eigenkapital."
+          },
+          "financial_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Finanzanlagen (within Anlagevermögen)."
+          },
+          "fixed_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Anlagevermögen."
+          },
+          "intangible_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Immaterielle Vermögensgegenstände (within Anlagevermögen)."
+          },
+          "inventories": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vorräte (within Umlaufvermögen)."
+          },
+          "liabilities": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbindlichkeiten."
+          },
+          "liabilities_to_affiliates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbindlichkeiten gegenüber verbundenen Unternehmen."
+          },
+          "liabilities_to_banks": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbindlichkeiten gegenüber Kreditinstituten."
+          },
+          "liabilities_to_shareholders": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbindlichkeiten gegenüber Gesellschaftern."
+          },
+          "object": {
+            "const": "balance_sheet_positions",
+            "default": "balance_sheet_positions",
+            "description": "Discriminator. Always `balance_sheet_positions`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "other_liabilities": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige Verbindlichkeiten."
+          },
+          "other_provisions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige Rückstellungen."
+          },
+          "pension_provisions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rückstellungen für Pensionen und ähnliche Verpflichtungen."
+          },
+          "prepaid_expenses": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Aktive Rechnungsabgrenzungsposten."
+          },
+          "provisions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rückstellungen."
+          },
+          "receivables": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Forderungen und sonstige Vermögensgegenstände (within Umlaufvermögen)."
+          },
+          "revenue_reserves": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Gewinnrücklagen (within Eigenkapital)."
+          },
+          "securities": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Wertpapiere des Umlaufvermögens."
+          },
+          "subscribed_capital": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Gezeichnetes Kapital (within Eigenkapital)."
+          },
+          "tangible_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sachanlagen (within Anlagevermögen)."
+          },
+          "tax_provisions": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Steuerrückstellungen."
+          },
+          "total_assets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Summe Aktiva — the balance-sheet total from the assets side."
+          },
+          "total_liabilities_and_equity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Summe Passiva — the balance-sheet total from the liabilities-and-equity side."
+          },
+          "trade_payables": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Verbindlichkeiten aus Lieferungen und Leistungen."
+          }
+        },
+        "title": "BalanceSheetPositions",
         "type": "object"
       },
       "BeneficialOwner": {
@@ -865,6 +1210,7 @@
         "type": "object"
       },
       "Bundesland": {
+        "description": "The 16 German and the 9 Austrian Länder (no name is shared).",
         "enum": [
           "Baden-Württemberg",
           "Bayern",
@@ -881,7 +1227,16 @@
           "Sachsen",
           "Sachsen-Anhalt",
           "Schleswig-Holstein",
-          "Thüringen"
+          "Thüringen",
+          "Burgenland",
+          "Kärnten",
+          "Niederösterreich",
+          "Oberösterreich",
+          "Salzburg",
+          "Steiermark",
+          "Tirol",
+          "Vorarlberg",
+          "Wien"
         ],
         "title": "Bundesland",
         "type": "string"
@@ -1165,10 +1520,11 @@
             "description": "Contact and web presence (domain, logo, social profiles, LinkedIn enrichment)."
           },
           "country_code": {
-            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register, `AT` for the Austrian Firmenbuch.",
             "enum": [
               "DE",
-              "CH"
+              "CH",
+              "AT"
             ],
             "title": "Country Code",
             "type": "string"
@@ -1227,7 +1583,7 @@
                 "type": "null"
               }
             ],
-            "description": "Date of the company's first observable register entry.",
+            "description": "Date of the company's first observable register entry. A date of 1 January usually means the register states only the year.",
             "title": "First Register Entry At"
           },
           "founder_profile": {
@@ -1321,7 +1677,7 @@
           },
           "legal_status": {
             "default": "active",
-            "description": "Derived lifecycle status, resolved from the merged Strukturierte-Inhalte, Chronologisches-Datenblatt and Insolvenzbekanntmachungen timelines — the most recent event wins regardless of which source recorded it.\n\n`deleted` — company has been removed from the German registries.\n`insolvent` — insolvency proceedings are open or preliminary measures are in force.\n`in_liquidation` — the company is dissolved (Auflösung, whether by shareholder resolution or as a consequence of insolvency) and a Liquidator is in office.\n`dissolved` — dissolved with no Liquidator in office, or an insolvency proceeding that has been lifted (Aufhebung des Verfahrens).\n`active` — default for everything else.",
+            "description": "Derived lifecycle status, resolved from the merged Strukturierte-Inhalte, Chronologisches-Datenblatt and Insolvenzbekanntmachungen timelines — the most recent event wins regardless of which source recorded it.\n\nSwiss companies' status comes from SHAB bankruptcy and Nachlass notices.\n\n`deleted` — company has been removed from the German registries.\n`insolvent` — insolvency proceedings are open or preliminary measures are in force.\n`in_liquidation` — the company is dissolved (Auflösung, whether by shareholder resolution or as a consequence of insolvency) and a Liquidator is in office.\n`dissolved` — dissolved with no Liquidator in office, or an insolvency proceeding that has been lifted (Aufhebung des Verfahrens).\n`active` — default for everything else.",
             "enum": [
               "active",
               "in_liquidation",
@@ -1367,7 +1723,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German and Austrian companies.",
             "examples": [
               "VD"
             ],
@@ -1382,7 +1738,7 @@
                 "type": "null"
               }
             ],
-            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
+            "description": "Registering court (Registergericht, Firmenbuchgericht) for German and Austrian companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -1409,7 +1765,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`, `AT-FB`).",
             "title": "Register Type"
           },
           "registered_seat": {
@@ -1444,7 +1800,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German and Austrian companies.",
             "examples": [
               "CHE-105.909.036"
             ],
@@ -1703,10 +2059,11 @@
       "CompanyDocumentList": {
         "properties": {
           "country_code": {
-            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register, `AT` for the Austrian Firmenbuch.",
             "enum": [
               "DE",
-              "CH"
+              "CH",
+              "AT"
             ],
             "title": "Country Code",
             "type": "string"
@@ -1910,7 +2267,7 @@
           },
           "history": {
             "$ref": "#/components/schemas/FinancialHistoryBlock",
-            "description": "Multi-year history: annual top-line metrics, plus — with `include=line_items` — the structured profit-and-loss, assets, and liabilities-and-equity rows from the filings. AI-reconstructed P&L is included for small-company filings that lack a structured statement."
+            "description": "Multi-year history: annual top-line metrics with the top-level positions, plus the structured profit-and-loss, assets, and liabilities-and-equity rows from the filings (left empty with `details=false`)."
           },
           "object": {
             "const": "company_financials",
@@ -2042,14 +2399,14 @@
                 "type": "null"
               }
             ],
-            "description": "Current legal status derived from the timeline (`active`, `dissolved`, `in_liquidation`, `insolvent`). `null` when the history is not available.",
+            "description": "Current legal status derived from the timeline (`active`, `dissolved`, `in_liquidation`, `insolvent`). `null` when the German register history is not available. Swiss companies still receive their legal status from SHAB bankruptcy and Nachlass notices.",
             "examples": [
               "active"
             ],
             "title": "Legal Status"
           },
           "legal_status_events": {
-            "description": "Insolvency, Auflösung and Liquidation events, newest first, merged and deduplicated across all three registries. Empty for a company that has never been in insolvency or liquidation.",
+            "description": "Insolvency, Auflösung and Liquidation events, newest first, merged and deduplicated across the source registries. Swiss companies still receive their legal-status timeline from SHAB bankruptcy and Nachlass notices when register history is not available. Empty for a company that has never been in insolvency or liquidation.",
             "items": {
               "$ref": "#/components/schemas/LegalStatusEvent"
             },
@@ -2309,7 +2666,8 @@
       "Country": {
         "enum": [
           "DE",
-          "CH"
+          "CH",
+          "AT"
         ],
         "title": "Country",
         "type": "string"
@@ -2336,7 +2694,7 @@
             "title": "Reason"
           },
           "status": {
-            "description": "`available` for companies in the German registers; `not_applicable` for the Swiss commercial register, which publishes no document downloads. An available catalog may be empty.",
+            "description": "`available` for companies in the German registers; `not_applicable` for the Swiss commercial register, which publishes no document downloads, and for the Austrian Firmenbuch. An available catalog may be empty.",
             "enum": [
               "available",
               "not_applicable"
@@ -2431,11 +2789,299 @@
         "title": "EmployeeYear",
         "type": "object"
       },
+      "FeedCompany": {
+        "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "country": {
+            "enum": [
+              "DE",
+              "CH",
+              "AT"
+            ],
+            "title": "Country",
+            "type": "string"
+          },
+          "eu_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eu Id"
+          },
+          "legal_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Form"
+          },
+          "nace_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nace Code"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "rechtsform_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rechtsform Code"
+          },
+          "register_court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Register Court"
+          },
+          "register_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Register Id"
+          },
+          "register_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Register Type"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "required": [
+          "country"
+        ],
+        "title": "FeedCompany",
+        "type": "object"
+      },
+      "FeedEvent": {
+        "description": "A company event. A reparse can resurface an id; deduplicate on `id`.",
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/FeedCompany"
+          },
+          "discovered_at": {
+            "format": "date-time",
+            "title": "Discovered At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "insolvency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedInsolvency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "links": {
+            "$ref": "#/components/schemas/FeedLinks"
+          },
+          "object": {
+            "const": "feed_event",
+            "default": "feed_event",
+            "title": "Object",
+            "type": "string"
+          },
+          "occurred_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred On"
+          },
+          "type": {
+            "enum": [
+              "company.founded",
+              "company.insolvency_notice"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "discovered_at",
+          "company",
+          "links"
+        ],
+        "title": "FeedEvent",
+        "type": "object"
+      },
+      "FeedInsolvency": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "court": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Court"
+          },
+          "publication_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Ref"
+          },
+          "publish_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publish Date"
+          }
+        },
+        "title": "FeedInsolvency",
+        "type": "object"
+      },
+      "FeedLinks": {
+        "properties": {
+          "company": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company"
+          }
+        },
+        "title": "FeedLinks",
+        "type": "object"
+      },
+      "FeedResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/FeedEvent"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "has_more": {
+            "description": "Continue immediately when true; otherwise poll again later.",
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "description": "Always present. Persist and pass back even after an empty page.",
+            "title": "Next Cursor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "next_cursor",
+          "has_more"
+        ],
+        "title": "FeedResponse",
+        "type": "object"
+      },
       "FinancialHistoryBlock": {
-        "description": "Multi-year financial history.\n\n`metrics` is always populated. The three line-item arrays are opt-in:\nthey are empty unless the request passes `include=line_items`.",
+        "description": "Multi-year financial history.\n\n`metrics` is always populated, with each year's top-level\n`balance_sheet` and `income_statement` positions. The three line-item\narrays hold every filed row at every depth; they are empty when the\nrequest passes `details=false`.",
         "properties": {
           "assets": {
-            "description": "Filed assets-side rows. Empty unless `include=line_items`.",
+            "description": "Every filed assets-side (Aktiva) row at every depth, with its HGB hierarchy. Empty with `details=false`; the top-level positions are always in `metrics[].balance_sheet`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -2443,7 +3089,7 @@
             "type": "array"
           },
           "liabilities_and_equity": {
-            "description": "Filed liabilities-and-equity rows. Empty unless `include=line_items`.",
+            "description": "Every filed liabilities-and-equity (Passiva) row at every depth, with its HGB hierarchy. Empty with `details=false`; the top-level positions are always in `metrics[].balance_sheet`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -2466,7 +3112,7 @@
             "type": "string"
           },
           "profit_and_loss": {
-            "description": "Filed profit-and-loss statement rows. Empty unless `include=line_items`.",
+            "description": "Every filed profit-and-loss row at every depth, with its HGB hierarchy. Empty with `details=false`; the top-level positions are always in `metrics[].income_statement`.",
             "items": {
               "$ref": "#/components/schemas/FinancialRow"
             },
@@ -2480,6 +3126,17 @@
       "FinancialMetric": {
         "description": "Top-line annual financial metrics for one fiscal year.",
         "properties": {
+          "balance_sheet": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BalanceSheetPositions"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Top-level balance-sheet positions (Anlagevermögen, Sachanlagen, Umlaufvermögen, Eigenkapital, Rückstellungen, Verbindlichkeiten, …). `null` when no balance sheet was parsed for this year."
+          },
           "balance_sheet_total": {
             "anyOf": [
               {
@@ -2489,7 +3146,7 @@
                 "type": "null"
               }
             ],
-            "description": "Balance-sheet total."
+            "description": "Balance-sheet total (Bilanzsumme), i.e. Summe Aktiva."
           },
           "ceiling_basis": {
             "anyOf": [
@@ -2517,6 +3174,17 @@
             ],
             "description": "Rohergebnis (§ 276 HGB) — the collapsed top line a small or medium-sized company may publish *instead of* revenue and cost of materials. Where this is set and `revenue` is null, this is the only top-line figure on file. It is not revenue and must not be compared with it: it is already net of input costs."
           },
+          "income_statement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IncomeStatementPositions"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Key profit-and-loss positions (Materialaufwand, Personalaufwand, Abschreibungen, Steuern, …). `null` when the company filed no profit-and-loss statement for this year."
+          },
           "liabilities_and_equity_total": {
             "anyOf": [
               {
@@ -2526,7 +3194,7 @@
                 "type": "null"
               }
             ],
-            "description": "Total liabilities and equity."
+            "description": "Total liabilities and equity (Summe Passiva)."
           },
           "object": {
             "const": "financial_metric",
@@ -2555,7 +3223,7 @@
                 "type": "null"
               }
             ],
-            "description": "Annual profit for this year."
+            "description": "Annual profit (Jahresüberschuss / Jahresfehlbetrag) for this year."
           },
           "revenue": {
             "anyOf": [
@@ -2828,6 +3496,17 @@
             ],
             "description": "Year `latest_employee_count` is for.",
             "title": "Latest Employee Count Year"
+          },
+          "latest_equity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Equity (Eigenkapital) reported for `latest_fiscal_year`. Only on the financials endpoint; `null` when that year's balance sheet does not show it."
           },
           "latest_fiscal_year": {
             "anyOf": [
@@ -3450,7 +4129,7 @@
             "title": "Reason"
           },
           "status": {
-            "description": "`available`: the chronological register extract was parsed and the timelines below are populated. `not_available`: no extract exists for this company — the Swiss commercial register publishes none, and for a German company none has been retrieved yet (`fetch_realtime=true` retrieves it). Every timeline is then empty and the call is not charged.",
+            "description": "`available`: the chronological register extract was parsed and the timelines below are populated. `not_available`: no extract exists for this company — the Swiss commercial register publishes none, Austrian history is not available yet, and for a German company none has been retrieved yet (`fetch_realtime=true` retrieves it). The register timelines are then empty and the call is not charged. Swiss companies still receive their legal-status timeline from SHAB.",
             "enum": [
               "available",
               "not_available"
@@ -3463,6 +4142,174 @@
           "status"
         ],
         "title": "HistoryCoverage",
+        "type": "object"
+      },
+      "IncomeStatementPositions": {
+        "description": "Key profit-and-loss positions for one fiscal year (§ 275 HGB).\n\nValues are signed as filed: income positive, expenses negative. Most\nsmall and medium-sized companies file no profit-and-loss statement, in\nwhich case this block is `null`. Every row is in\n`history.profit_and_loss`.",
+        "properties": {
+          "cost_of_materials": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Materialaufwand. Expenses are negative, as filed."
+          },
+          "depreciation_and_amortization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Abschreibungen auf immaterielle Vermögensgegenstände des Anlagevermögens und Sachanlagen. Negative, as filed."
+          },
+          "income_from_investments": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Erträge aus Beteiligungen."
+          },
+          "income_taxes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Steuern vom Einkommen und vom Ertrag. Negative, as filed; positive for a refund."
+          },
+          "interest_expenses": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Zinsen und ähnliche Aufwendungen. Negative, as filed."
+          },
+          "interest_income": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige Zinsen und ähnliche Erträge."
+          },
+          "net_income": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Jahresüberschuss / Jahresfehlbetrag as filed in the profit-and-loss statement."
+          },
+          "object": {
+            "const": "income_statement_positions",
+            "default": "income_statement_positions",
+            "description": "Discriminator. Always `income_statement_positions`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "operating_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Betriebsergebnis, when the filing states it (most HGB filings do not)."
+          },
+          "other_operating_expenses": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige betriebliche Aufwendungen. Negative, as filed."
+          },
+          "other_operating_income": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige betriebliche Erträge."
+          },
+          "other_taxes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sonstige Steuern. Negative, as filed."
+          },
+          "personnel_expenses": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Personalaufwand. Negative, as filed."
+          },
+          "result_after_taxes": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ergebnis nach Steuern."
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Umsatzerlöse, as filed in this year's profit-and-loss statement."
+          }
+        },
+        "title": "IncomeStatementPositions",
         "type": "object"
       },
       "IndustryBlock": {
@@ -3538,7 +4385,7 @@
                 "type": "null"
               }
             ],
-            "description": "Insolvency case number (Aktenzeichen).",
+            "description": "Insolvency case number (Aktenzeichen). Swiss companies have no case number.",
             "title": "Case Number"
           },
           "court_name": {
@@ -3550,12 +4397,12 @@
                 "type": "null"
               }
             ],
-            "description": "Name of the insolvency court, when proceedings are open.",
+            "description": "Name of the insolvency court, when proceedings are open; bankruptcy office or court for Swiss companies.",
             "title": "Court Name"
           },
           "current_status": {
             "default": "active",
-            "description": "Current stage of the proceeding. `preliminary` — vorläufige Insolvenzverwaltung / Sicherungsmaßnahmen. `in_insolvency` — Verfahren eröffnet. `rejected` — Abweisung mangels Masse. `terminated` — Verfahren aufgehoben. `in_liquidation` / `dissolved` — no insolvency proceeding, the company was dissolved under corporate law. `active` — no proceeding.",
+            "description": "Current stage of the proceeding. `preliminary` — vorläufige Insolvenzverwaltung / Sicherungsmaßnahmen / provisorische Nachlassstundung. `in_insolvency` — Verfahren eröffnet / Konkurseröffnung / definitive Nachlassstundung. `rejected` — Abweisung mangels Masse / Einstellung mangels Aktiven. `terminated` — Verfahren aufgehoben / Schluss des Konkursverfahrens / Nachlassvertrag mit Vermögensabtretung. `in_liquidation` / `dissolved` — no insolvency proceeding, the company was dissolved under corporate law. `active` — no proceeding.",
             "enum": [
               "active",
               "preliminary",
@@ -3615,6 +4462,28 @@
         },
         "title": "InsolvencyBlock",
         "type": "object"
+      },
+      "InsolvencyCategory": {
+        "enum": [
+          "Abweisungen mangels Masse",
+          "Aufhebung der Nachlassstundung",
+          "Bestätigung des Nachlassvertrages",
+          "Definitive Nachlassstundung",
+          "Einstellung mangels Aktiven",
+          "Eröffnungen",
+          "Konkurseröffnung",
+          "Konkursverfahren eröffnet",
+          "Nachlassvertrag mit Vermögensabtretung",
+          "Nichteröffnung mangels Vermögens",
+          "Provisorische Nachlassstundung",
+          "Sanierungsverfahren eröffnet",
+          "Schluss des Konkursverfahrens",
+          "Schuldenruf",
+          "Sicherungsmaßnahmen",
+          "Widerruf des Konkurses"
+        ],
+        "title": "InsolvencyCategory",
+        "type": "string"
       },
       "LegalFormEntry": {
         "description": "A change of legal form.",
@@ -3697,7 +4566,7 @@
         "type": "string"
       },
       "LegalStatusEvent": {
-        "description": "One insolvency / Auflösung / Liquidation event.\n\nDeduplicated across the three sources, so a single event carries every\nregistry that recorded it in `sources` rather than appearing three times.",
+        "description": "One insolvency / Auflösung / Liquidation event.\n\nDeduplicated across the four sources, so a single event carries every\nregistry that recorded it in `sources`.",
         "properties": {
           "case_number": {
             "anyOf": [
@@ -3708,11 +4577,11 @@
                 "type": "null"
               }
             ],
-            "description": "Insolvency case number (Aktenzeichen), when the entry states one.",
+            "description": "Insolvency case number (Aktenzeichen), when the entry states one. Swiss companies have no case number.",
             "title": "Case Number"
           },
           "category": {
-            "description": "Event type, in the shared German vocabulary: `Sicherungsmaßnahmen`, `Eröffnungen`, `Abweisungen mangels Masse`, `Aufhebung Sicherungsmaßnahmen`, `Aufhebung des Verfahrens`, `Auflösung durch Gesellschafterbeschluss`, `Auflösung mit Fortführung`, `Auflösung`.",
+            "description": "Event type, in the shared German vocabulary: `Sicherungsmaßnahmen`, `Eröffnungen`, `Abweisungen mangels Masse`, `Aufhebung Sicherungsmaßnahmen`, `Aufhebung des Verfahrens`, `Auflösung durch Gesellschafterbeschluss`, `Auflösung mit Fortführung`, `Auflösung`. Swiss Handelsamtsblatt / SHAB notices for Swiss companies: `Konkurseröffnung`, `Einstellung mangels Aktiven`, `Schluss des Konkursverfahrens`, `Widerruf des Konkurses`, `Provisorische Nachlassstundung`, `Definitive Nachlassstundung`, `Aufhebung der Nachlassstundung`, `Bestätigung des Nachlassvertrages`, `Nachlassvertrag mit Vermögensabtretung`.",
             "examples": [
               "Auflösung durch Gesellschafterbeschluss"
             ],
@@ -3728,7 +4597,7 @@
                 "type": "null"
               }
             ],
-            "description": "Court named in the entry.",
+            "description": "Court named in the entry; bankruptcy office or court for Swiss companies.",
             "title": "Court Name"
           },
           "decision_date": {
@@ -3785,7 +4654,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register entry date (SI / CD) or portal publication date. `null` when the source records no date.",
+            "description": "Register entry date (SI / CD), portal publication date, or the SHAB publication date for `shab`. `null` when the source records no date.",
             "title": "Event Date"
           },
           "ex_officio": {
@@ -3821,12 +4690,14 @@
             "type": "boolean"
           },
           "sources": {
-            "description": "Registries that recorded this event. `si` — Strukturierte Inhalte, `cd` — Chronologisches Datenblatt, `portal` — Insolvenzbekanntmachungen.",
+            "description": "Registries that recorded this event. `si` — Strukturierte Inhalte, `cd` — Chronologisches Datenblatt, `portal` — Insolvenzbekanntmachungen, `shab` — Schweizerisches Handelsamtsblatt (SOGC/FOSC), `firmenbuch` — Austrian Firmenbuch.",
             "items": {
               "enum": [
                 "si",
                 "cd",
-                "portal"
+                "portal",
+                "shab",
+                "firmenbuch"
               ],
               "type": "string"
             },
@@ -4851,7 +5722,24 @@
           "Institut des öffentlichen Rechts (CH)",
           "Nichtkaufmännische Prokura (CH)",
           "Gemeinderschaft (CH)",
-          "Zweigniederlassung (CH)"
+          "Zweigniederlassung (CH)",
+          "GmbH (AT)",
+          "AG (AT)",
+          "FlexCo (AT)",
+          "KG (AT)",
+          "OG (AT)",
+          "e.U. (AT)",
+          "Genossenschaft (AT)",
+          "Privatstiftung (AT)",
+          "Sparkasse (AT)",
+          "VVaG (AT)",
+          "SE (AT)",
+          "EWIV (AT)",
+          "Sonstiger Rechtsträger (AT)",
+          "OHG (AT, alt)",
+          "KEG (AT, alt)",
+          "OEG (AT, alt)",
+          "Einzelkaufmann (AT, alt)"
         ],
         "title": "Rechtsform",
         "type": "string"
@@ -4912,6 +5800,7 @@
           "Hamburg",
           "Hamm",
           "Hanau",
+          "Handelsgericht Wien",
           "Hannover",
           "Hildesheim",
           "Hof",
@@ -4931,6 +5820,21 @@
           "Köln",
           "Königstein",
           "Landau",
+          "Landesgericht Eisenstadt",
+          "Landesgericht Feldkirch",
+          "Landesgericht Innsbruck",
+          "Landesgericht Klagenfurt",
+          "Landesgericht Korneuburg",
+          "Landesgericht Krems an der Donau",
+          "Landesgericht Leoben",
+          "Landesgericht Linz",
+          "Landesgericht Ried im Innkreis",
+          "Landesgericht Salzburg",
+          "Landesgericht St. Pölten",
+          "Landesgericht Steyr",
+          "Landesgericht Wels",
+          "Landesgericht Wiener Neustadt",
+          "Landesgericht für Zivilrechtssachen Graz",
           "Landshut",
           "Langenfeld",
           "Lebach",
@@ -5005,7 +5909,8 @@
           "PR",
           "VR",
           "GsR",
-          "CH-HR"
+          "CH-HR",
+          "AT-FB"
         ],
         "title": "RegisterType",
         "type": "string"
@@ -5179,10 +6084,11 @@
             "description": "Registered seat address."
           },
           "country_code": {
-            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register.",
+            "description": "Country of the register the company is entered in: `DE` for the German registers (Handelsregister, Genossenschafts-, Partnerschafts-, Vereinsregister), `CH` for the Swiss commercial register, `AT` for the Austrian Firmenbuch.",
             "enum": [
               "DE",
-              "CH"
+              "CH",
+              "AT"
             ],
             "title": "Country Code",
             "type": "string"
@@ -5251,7 +6157,7 @@
                 "type": "null"
               }
             ],
-            "description": "Founding date, when reported.",
+            "description": "Founding date, when reported. A date of 1 January usually means the register states only the year.",
             "title": "Founded At"
           },
           "is_branch": {
@@ -5267,7 +6173,7 @@
           },
           "legal_status": {
             "default": "active",
-            "description": "Lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Same vocabulary as `CompanyDetail.legal_status` and the `legal_status` search filter.",
+            "description": "Lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Swiss companies' status comes from SHAB bankruptcy and Nachlass notices. Same vocabulary as `CompanyDetail.legal_status` and the `legal_status` search filter.",
             "enum": [
               "active",
               "in_liquidation",
@@ -5318,7 +6224,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German companies.",
+            "description": "Swiss companies only: two-letter code of the canton whose commercial register keeps the entry (e.g. `VD`). `null` for German and Austrian companies.",
             "examples": [
               "VD"
             ],
@@ -5333,7 +6239,7 @@
                 "type": "null"
               }
             ],
-            "description": "Registering court (Registergericht) for German companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
+            "description": "Registering court (Registergericht, Firmenbuchgericht) for German and Austrian companies; for Swiss companies, the full name of the canton whose register office keeps the entry (e.g. `Vaud`).",
             "title": "Register Court"
           },
           "register_number": {
@@ -5360,7 +6266,7 @@
                 "type": "null"
               }
             ],
-            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`).",
+            "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`, `AT-FB`).",
             "title": "Register Type"
           },
           "registered_seat": {
@@ -5432,7 +6338,7 @@
                 "type": "null"
               }
             ],
-            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German companies.",
+            "description": "Swiss companies only: the Unternehmens-Identifikationsnummer in its official format. `null` for German and Austrian companies.",
             "examples": [
               "CHE-105.909.036"
             ],
@@ -5662,7 +6568,7 @@
           },
           "status": {
             "default": "not_filed",
-            "description": "Coverage status. `available`: cap table parsed and returned; `not_applicable`: legal form does not file a Gesellschafterliste; `not_filed`: filing expected but not yet received; `token_limit_reached`: filing too large to process.",
+            "description": "Coverage status. `available`: cap table parsed and returned; `not_applicable`: legal form does not file a Gesellschafterliste, or the company is Austrian (no shareholder data yet); `not_filed`: filing expected but not yet received; `token_limit_reached`: filing too large to process.",
             "enum": [
               "available",
               "not_applicable",
@@ -7052,7 +7958,7 @@
           },
           "status": {
             "default": "not_filed",
-            "description": "Coverage status. `available`: chain fully resolved to natural persons, OR remaining unresolved branches sum to ≤25 % effective share and cannot hide a beneficial owner; `partial`: at least one unresolved branch could hide a beneficial owner — either a single unresolved org carries >25 % effective share at the root, or several sum to >25 %; `not_applicable`: legal form does not file a Gesellschafterliste; `not_filed`: filing expected but not yet received.",
+            "description": "Coverage status. `available`: chain fully resolved to natural persons, OR remaining unresolved branches sum to ≤25 % effective share and cannot hide a beneficial owner; `partial`: at least one unresolved branch could hide a beneficial owner — either a single unresolved org carries >25 % effective share at the root, or several sum to >25 %; `not_applicable`: legal form does not file a Gesellschafterliste, or the company is Austrian (no shareholder data yet); `not_filed`: filing expected but not yet received.",
             "enum": [
               "available",
               "partial",
@@ -7507,7 +8413,7 @@
     "securitySchemes": {
       "BearerAuth": {
         "bearerFormat": "firmendata API key",
-        "description": "Bearer token in the `Authorization` header. Create and manage your tokens in [API Key Settings](https://firmendata.com/de/account/api-keys).",
+        "description": "Bearer token in the `Authorization` header. Create and manage your tokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).",
         "scheme": "bearer",
         "type": "http"
       }
@@ -7518,7 +8424,7 @@
       "email": "info@firmendata.com",
       "name": "firmendata Support"
     },
-    "description": "Programmatic access to German company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/account/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions.** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. Do not persist them — they are not\nguaranteed to survive a deploy.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
+    "description": "Programmatic access to German, Swiss and Austrian company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). For company endpoints,\n   this only affects German (DE) companies; Swiss (CH) and Austrian (AT)\n   companies ignore the flag and incur no realtime surcharge. On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions (German companies only).** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. Search and list cursors are not\nguaranteed to survive a deploy. Feed cursors under `/v1/feeds` persist\nacross deploys and restarts: keep `next_cursor` even after an empty page.\nFeed positions expire after seven days; restart with `since` if expired.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
     "license": {
       "name": "Commercial",
       "url": "https://firmendata.com/en/terms-and-conditions"
@@ -7530,22 +8436,23 @@
   "paths": {
     "/v1/companies/autocomplete": {
       "get": {
-        "description": "Each hit carries just enough context — company name and register reference — to pick the right result out of a dropdown. Not meant for programmatic search — use `/companies/search` for that.\n\n**Free without an API key.** This is the only v1 endpoint you can call unauthenticated. Keyless access is rate limited — modestly, and by address — and is intended for trying the API out, for a search box, or for low-volume use. Send an `Authorization: Bearer <key>` header for substantially higher limits; the call still costs 0 credits either way. Respect `Retry-After` on a `429`.\n\nSet `fetch_realtime=true` to also search the German company registers live and index any companies not yet known to firmendata — this is how a company founded days ago can be found before the regular register sweep reaches it. The freshly indexed companies appear in the same response. **`fetch_realtime` requires an API key** and is billed; keyless requests that set it are rejected with `401`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Companies whose name starts with `q`, from a single character, so a search box can suggest from the first keystroke. Exact core-name matches (ignoring legal-form suffixes) come first, then biggest revenue. From three characters, companies whose name contains `q` as a whole word also rank by revenue. Use `country` to restrict suggestions to a company register. Each hit carries just enough context — company name and register reference — to pick the right result out of a dropdown. Not meant for programmatic search — use `/companies/search` for that.\n\n**Free without an API key.** This is the only v1 endpoint you can call unauthenticated. Keyless access is rate limited — modestly, and by address — and is intended for trying the API out, for a search box, or for low-volume use. Send an `Authorization: Bearer <key>` header for substantially higher limits; the call still costs 0 credits either way. Respect `Retry-After` on a `429`.\n\nSet `fetch_realtime=true` (with `q` of at least 3 characters) to also search the German company registers live and index any companies not yet known to firmendata — this is how a company founded days ago can be found before the regular register sweep reaches it. The freshly indexed companies appear in the same response. **`fetch_realtime` requires an API key** and is billed; keyless requests that set it are rejected with `401`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "autocompleteCompanies",
         "parameters": [
           {
-            "description": "Free-text fragment of a company name. Minimum 3 characters after trimming.",
+            "description": "Start of a company name, at least 1 character after trimming (3 with `fetch_realtime`).",
             "in": "query",
             "name": "q",
             "required": true,
             "schema": {
-              "description": "Free-text fragment of a company name. Minimum 3 characters after trimming.",
+              "description": "Start of a company name, at least 1 character after trimming (3 with `fetch_realtime`).",
               "examples": [
+                "s",
                 "sap",
                 "deutsche bank"
               ],
               "maxLength": 100,
-              "minLength": 3,
+              "minLength": 1,
               "title": "Q",
               "type": "string"
             }
@@ -7562,6 +8469,29 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Restrict all suggestions to the company register: DE, CH or AT. Case-insensitive; omitted searches all countries.",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "DE",
+                    "CH",
+                    "AT"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict all suggestions to the company register: DE, CH or AT. Case-insensitive; omitted searches all countries.",
+              "title": "Country"
             }
           },
           {
@@ -7586,7 +8516,7 @@
                 }
               }
             },
-            "description": "Suggestion hits ordered by match relevance.",
+            "description": "Suggestion hits, exact core-name matches first, then biggest revenue.",
             "headers": {
               "X-Credits-Charged": {
                 "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
@@ -7731,7 +8661,7 @@
     },
     "/v1/companies/search": {
       "get": {
-        "description": "Full-text + filter search over the German commercial register. Cursor-paginated,\nup to 50 hits per page. `total_approx` caps at 10,000 — tighten filters for an\nexact count.\n\nEach hit carries identity and registered seat, the register reference (court,\ntype, number), headline financials in EUR, the company's website, and the CPV\ncodes of any EU tenders it won.\n\nFilter values are case-insensitive, several filters accept multiple values, and\nthe financial figures need one caveat before you compute ratios with them — see\nthe **Search** section above for all three. Unknown parameters, unknown filter\nvalues and inverted ranges (`*_min` above `*_max`, `founded_from` after\n`founded_to`) are rejected with `422` instead of being ignored.\n\nSetting `fetch_realtime=true` additionally searches the German registers live\nfor `q` (or `company_name`, one of which is then required) and appends any\ncompanies not yet indexed by firmendata to the first page, carrying identity and\nseat only. First page only — omit `cursor`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Full-text + filter search over German, Swiss and Austrian commercial registers. Cursor-paginated,\nup to 50 hits per page. `total_approx` caps at 10,000 — tighten filters for an\nexact count.\n\nEach hit carries identity and registered seat, the register reference (court,\ntype, number), headline financials in EUR, the company's website, and the CPV\ncodes of any EU tenders it won.\n\nFilter values are case-insensitive, several filters accept multiple values, and\nthe financial figures need one caveat before you compute ratios with them — see\nthe **Search** section above for all three. Unknown parameters, unknown filter\nvalues and inverted ranges (`*_min` above `*_max`, `founded_from` after\n`founded_to`) are rejected with `422` instead of being ignored.\n\nSetting `fetch_realtime=true` additionally searches the German registers live\nfor `q` (or `company_name`, one of which is then required) and appends any\ncompanies not yet indexed by firmendata to the first page, carrying identity and\nseat only. First page only — omit `cursor`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "searchCompanies",
         "parameters": [
           {
@@ -8001,7 +8931,7 @@
             }
           },
           {
-            "description": "German federal state. Multi-valued; also accepts postal codes (`BY`, `NRW`) and English names (`Bavaria`).",
+            "description": "German or Austrian federal state. Multi-valued; also accepts postal codes (`BY`, `NRW`) and English names (`Bavaria`).",
             "in": "query",
             "name": "bundesland",
             "required": false,
@@ -8017,7 +8947,7 @@
                   "type": "null"
                 }
               ],
-              "description": "German federal state. Multi-valued; also accepts postal codes (`BY`, `NRW`) and English names (`Bavaria`).",
+              "description": "German or Austrian federal state. Multi-valued; also accepts postal codes (`BY`, `NRW`) and English names (`Bavaria`).",
               "examples": [
                 [
                   "Bayern",
@@ -8265,7 +9195,7 @@
             }
           },
           {
-            "description": "German legal form. Multi-valued. Common abbreviations and the long forms are accepted too (`eK`, `UG (haftungsbeschränkt)`, `GmbH & Co KG`).",
+            "description": "German, Swiss or Austrian legal form. Multi-valued. Common abbreviations and the long forms are accepted too (`eK`, `UG (haftungsbeschränkt)`, `GmbH & Co KG`).",
             "in": "query",
             "name": "rechtsform",
             "required": false,
@@ -8281,7 +9211,7 @@
                   "type": "null"
                 }
               ],
-              "description": "German legal form. Multi-valued. Common abbreviations and the long forms are accepted too (`eK`, `UG (haftungsbeschränkt)`, `GmbH & Co KG`).",
+              "description": "German, Swiss or Austrian legal form. Multi-valued. Common abbreviations and the long forms are accepted too (`eK`, `UG (haftungsbeschränkt)`, `GmbH & Co KG`).",
               "examples": [
                 [
                   "GmbH",
@@ -8374,7 +9304,7 @@
             }
           },
           {
-            "description": "Company lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Multi-valued.\n\n- `active` — no insolvency or dissolution on record\n- `insolvent` — proceedings open or preliminary measures in force\n- `in_liquidation` — dissolved, with a Liquidator in office\n- `dissolved` — dissolved with no Liquidator, or a proceeding since lifted\n- `deleted` — removed from the register; outranks the others\n\nThe five are disjoint and exhaustive, so selecting every value is the same as selecting none.",
+            "description": "Company lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines, plus SHAB KK/NA notices for Swiss companies. Multi-valued.\n\n- `active` — no insolvency or dissolution on record\n- `insolvent` — proceedings open or preliminary measures in force\n- `in_liquidation` — dissolved, with a Liquidator in office\n- `dissolved` — dissolved with no Liquidator, or a proceeding since lifted\n- `deleted` — removed from the register; outranks the others\n\nThe five are disjoint and exhaustive, so selecting every value is the same as selecting none.",
             "in": "query",
             "name": "legal_status",
             "required": false,
@@ -8390,7 +9320,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Company lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines. Multi-valued.\n\n- `active` — no insolvency or dissolution on record\n- `insolvent` — proceedings open or preliminary measures in force\n- `in_liquidation` — dissolved, with a Liquidator in office\n- `dissolved` — dissolved with no Liquidator, or a proceeding since lifted\n- `deleted` — removed from the register; outranks the others\n\nThe five are disjoint and exhaustive, so selecting every value is the same as selecting none.",
+              "description": "Company lifecycle status, resolved from the merged Handelsregister (SI + CD) and Insolvenzbekanntmachungen timelines, plus SHAB KK/NA notices for Swiss companies. Multi-valued.\n\n- `active` — no insolvency or dissolution on record\n- `insolvent` — proceedings open or preliminary measures in force\n- `in_liquidation` — dissolved, with a Liquidator in office\n- `dissolved` — dissolved with no Liquidator, or a proceeding since lifted\n- `deleted` — removed from the register; outranks the others\n\nThe five are disjoint and exhaustive, so selecting every value is the same as selecting none.",
               "examples": [
                 [
                   "insolvent",
@@ -8812,13 +9742,13 @@
             }
           },
           {
-            "description": "When `true`, refresh the company's register snapshot from the German registries before building the response, so the underlying data is as fresh as possible. Adds upstream latency (typically several seconds). Scraping failures are logged but do not fail the request — the most recent indexed data is returned instead. The chronological register history is refreshed by `/v1/companies/{eu_id}/history` instead — this endpoint does not refresh it.",
+            "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refresh the company's register snapshot from the German registries before building the response, so the underlying data is as fresh as possible. Adds upstream latency (typically several seconds). Scraping failures are logged but do not fail the request — the most recent indexed data is returned instead. The chronological register history is refreshed by `/v1/companies/{eu_id}/history` instead — this endpoint does not refresh it.",
             "in": "query",
             "name": "fetch_realtime",
             "required": false,
             "schema": {
               "default": false,
-              "description": "When `true`, refresh the company's register snapshot from the German registries before building the response, so the underlying data is as fresh as possible. Adds upstream latency (typically several seconds). Scraping failures are logged but do not fail the request — the most recent indexed data is returned instead. The chronological register history is refreshed by `/v1/companies/{eu_id}/history` instead — this endpoint does not refresh it.",
+              "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refresh the company's register snapshot from the German registries before building the response, so the underlying data is as fresh as possible. Adds upstream latency (typically several seconds). Scraping failures are logged but do not fail the request — the most recent indexed data is returned instead. The chronological register history is refreshed by `/v1/companies/{eu_id}/history` instead — this endpoint does not refresh it.",
               "title": "Fetch Realtime",
               "type": "boolean"
             }
@@ -8995,7 +9925,7 @@
     },
     "/v1/companies/{eu_id}/documents": {
       "get": {
-        "description": "Check the German registries live and list register documents,\nincluding older DK versions. This typically takes several seconds.\n\nPass a DK item's `document_id` and its `type` as `file_type` to\n`GET /v1/companies/{eu_id}/documents/download` to download that version.\n`register_extract_current` and `register_extract_chronological` are generated\non request and have no `document_id`; download them by `file_type`.\n`stored` indicates that a copy is already available for immediate download.\n\nWhen the registries are unreachable or the company is no longer listed,\nthe response serves the stored catalog with the outcome in `freshness`.\nUnreachable-registry, unavailable-company and empty answers are not billed.\nSwiss companies return an empty list with `coverage.status=not_applicable`.\nThis endpoint always checks live and accepts no `fetch_realtime` parameter.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Check the German registries live and list register documents,\nincluding older DK versions. This typically takes several seconds.\n\nPass a DK item's `document_id` and its `type` as `file_type` to\n`GET /v1/companies/{eu_id}/documents/download` to download that version.\n`register_extract_current` and `register_extract_chronological` are generated\non request and have no `document_id`; download them by `file_type`.\n`stored` indicates that a copy is already available for immediate download.\n\nWhen the registries are unreachable or the company is no longer listed,\nthe response serves the stored catalog with the outcome in `freshness`.\nUnreachable-registry, unavailable-company and empty answers are not billed.\nSwiss and Austrian companies return an empty list with `coverage.status=not_applicable`.\nThis endpoint always checks live and accepts no `fetch_realtime` parameter.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "listCompanyDocuments",
         "parameters": [
           {
@@ -9262,13 +10192,13 @@
             }
           },
           {
-            "description": "When `true`, fetch the requested `file_type` from the German registries before resolving the file, so the presigned URL points at the freshest version. Adds upstream latency (typically several seconds). Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+            "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, fetch the requested `file_type` from the German registries before resolving the file, so the presigned URL points at the freshest version. Adds upstream latency (typically several seconds). Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
             "in": "query",
             "name": "fetch_realtime",
             "required": false,
             "schema": {
               "default": false,
-              "description": "When `true`, fetch the requested `file_type` from the German registries before resolving the file, so the presigned URL points at the freshest version. Adds upstream latency (typically several seconds). Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+              "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, fetch the requested `file_type` from the German registries before resolving the file, so the presigned URL points at the freshest version. Adds upstream latency (typically several seconds). Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
               "title": "Fetch Realtime",
               "type": "boolean"
             }
@@ -9445,7 +10375,7 @@
     },
     "/v1/companies/{eu_id}/financials": {
       "get": {
-        "description": "Multi-year financial profile for one company.\n\n- **Aggregated summary** — latest-year revenue, profit, assets, liabilities, and equity\n- **Multi-year history** — annual top-line metrics; with `include=line_items`, also the structured P&L, AKTIVA, and PASSIVA rows, with AI-reconstructed P&L for small filings that lack a structured GuV\n- **Employee time series** — total, full-time, and part-time headcount per year\n- **Group relationships** — parent company and known subsidiaries sourced from consolidated filings\n- **Filed Bilanzen** — list of Jahresabschluss and Konzernabschluss filings with type and publication date (PDF downloads are not exposed in v1)\n\n`years=N` limits every per-year array — metrics, line items, employee\nseries and filings — to the N most recent fiscal years on record.\n\nA company with no financial data on record at all (no figures, no\nheadcount, no filings, no group relationships) is answered with the empty\nshape and costs no credits.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Multi-year financial profile for one company.\n\n- **Aggregated summary** — latest-year revenue, profit, total assets, total liabilities and equity, and equity\n- **Multi-year history** — per fiscal year: top-line metrics plus the top-level balance-sheet and P&L positions (see *Two levels of detail* below)\n- **Employee time series** — total, full-time, and part-time headcount per year\n- **Group relationships** — parent company and known subsidiaries sourced from consolidated filings\n- **Filed Bilanzen** — list of Jahresabschluss and Konzernabschluss filings with type and publication date (PDF downloads are not exposed in v1)\n\n### Two levels of detail\n\n**Detailed (default)** — `GET /v1/companies/{eu_id}/financials`\n\nEvery row of the filed statements at every depth in `history.profit_and_loss`, `history.assets` and `history.liabilities_and_equity` — e.g. Löhne und Gehälter under Personalaufwand, or Grundstücke and Technische Anlagen under Sachanlagen — each with its position in the HGB hierarchy (`section` … `subsubsubsection`) and current and prior-year values, plus everything the lean level has. Responses can be large (often 100 KB+ for groups); combine with `years=N` to keep them small.\n\n**Lean** — `GET /v1/companies/{eu_id}/financials?details=false`\n\nThe line-item arrays are left empty. Each entry of `history.metrics` still carries:\n\n- the headline figures: `revenue`, `profit`, `balance_sheet_total` (Summe Aktiva), `liabilities_and_equity_total` (Summe Passiva)\n- `balance_sheet` — the top-level positions of § 266 HGB: Anlagevermögen with Immaterielle Vermögensgegenstände, Sachanlagen and Finanzanlagen; Umlaufvermögen with Vorräte, Forderungen, Wertpapiere and Kassenbestand; Eigenkapital with Gezeichnetes Kapital and Rücklagen; Rückstellungen; Verbindlichkeiten by creditor; Rechnungsabgrenzung and latente Steuern\n- `income_statement` — the key positions of § 275 HGB: Umsatzerlöse, Materialaufwand, Personalaufwand, Abschreibungen, sonstige betriebliche Erträge/Aufwendungen, Beteiligungs- and Zinsergebnis, Steuern, Ergebnis nach Steuern, Jahresüberschuss\n\nA lean response is typically a few kilobytes — enough for screening, dashboards and bulk calls. Both levels cost the same.\n\nPositions are taken as filed, never computed: a position the filing does not show is `null`. Small companies file a shortened balance sheet and usually no P&L, so their `income_statement` is `null`.\n\n`years=N` limits every per-year array — metrics, line items, employee\nseries and filings — to the N most recent fiscal years on record.\n\nA company with no financial data on record at all (no figures, no\nheadcount, no filings, no group relationships) is answered with the empty\nshape and costs no credits.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyFinancials",
         "parameters": [
           {
@@ -9465,7 +10395,23 @@
             }
           },
           {
-            "description": "Opt-in blocks. `line_items` adds the structured profit-and-loss, assets and liabilities-and-equity rows to `history` — by far the largest part of the response.",
+            "description": "Detail level. Default `true`: every filed P&L, assets and liabilities-and-equity row at every depth in `history.profit_and_loss`, `history.assets` and `history.liabilities_and_equity`. Pass `details=false` for the lean response: those arrays stay empty, and each year keeps only its top-level positions in `history.metrics[].balance_sheet` / `.income_statement`. Same credit cost.",
+            "in": "query",
+            "name": "details",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "Detail level. Default `true`: every filed P&L, assets and liabilities-and-equity row at every depth in `history.profit_and_loss`, `history.assets` and `history.liabilities_and_equity`. Pass `details=false` for the lean response: those arrays stay empty, and each year keeps only its top-level positions in `history.metrics[].balance_sheet` / `.income_statement`. Same credit cost.",
+              "examples": [
+                false
+              ],
+              "title": "Details",
+              "type": "boolean"
+            }
+          },
+          {
+            "deprecated": true,
+            "description": "Deprecated: line items are now returned by default. Accepted for compatibility; `include=line_items` forces the detailed response even with `details=false`.",
             "in": "query",
             "name": "include",
             "required": false,
@@ -9482,12 +10428,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Opt-in blocks. `line_items` adds the structured profit-and-loss, assets and liabilities-and-equity rows to `history` — by far the largest part of the response.",
-              "examples": [
-                [
-                  "line_items"
-                ]
-              ],
+              "deprecated": true,
+              "description": "Deprecated: line items are now returned by default. Accepted for compatibility; `include=line_items` forces the detailed response even with `details=false`.",
               "title": "Include"
             }
           },
@@ -9685,7 +10627,7 @@
     },
     "/v1/companies/{eu_id}/history": {
       "get": {
-        "description": "Aggregated chronological register-entry history for a company.\n\nFor each kind of change — company name (`names`), seat (`seats`), share\ncapital (`share_capital`), officers (`board_changes`), business purpose,\nlegal form and articles — the endpoint returns the full timeline of\nentries that affected it, oldest first. `current_board` is who holds office\nnow, derived by replaying every appointment, departure and correction.\nDates are ISO 8601; people use the same `person` object as the company\ndetail.\n\n- **`fetch_realtime`** — optional. When `true`, refresh the\n  underlying register history from the German registries before\n  responding. Adds upstream latency (typically several seconds).\n  Failures are surfaced via `freshness.realtime_fetching_status`; the response\n  still falls back to the most recent indexed data when a refresh\n  fails.\n\n`coverage.status` is `not_available` when no chronological extract exists\nfor the company — the Swiss commercial register publishes none, and some\nGerman entries have not been retrieved yet. Such responses carry empty\ntimelines and are not charged. A 404 means the company itself is unknown.\nThe same data backs the `history` webhook subscription type, so the\nshape returned here is exactly the shape downstream consumers fetch\nwhen responding to a `history.updated` webhook.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Aggregated chronological register-entry history for a company.\n\nFor each kind of change — company name (`names`), seat (`seats`), share\ncapital (`share_capital`), officers (`board_changes`), business purpose,\nlegal form and articles — the endpoint returns the full timeline of\nentries that affected it, oldest first. `current_board` is who holds office\nnow, derived by replaying every appointment, departure and correction.\nDates are ISO 8601; people use the same `person` object as the company\ndetail.\n\n- **`fetch_realtime`** — optional. When `true`, refresh the\n  underlying register history from the German registries before\n  responding. Adds upstream latency (typically several seconds).\n  Failures are surfaced via `freshness.realtime_fetching_status`; the response\n  still falls back to the most recent indexed data when a refresh\n  fails.\n\n`coverage.status` is `not_available` when no chronological extract exists\nfor the company — the Swiss commercial register publishes none, Austrian\nhistory is not available yet, and some German entries have not been\nretrieved yet. Such responses are not charged;\nSwiss companies still receive their legal-status timeline from SHAB.\nA 404 means the company itself is unknown.\nThe same data backs the `history` webhook subscription type, so the\nshape returned here is exactly the shape downstream consumers fetch\nwhen responding to a `history.updated` webhook.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyHistory",
         "parameters": [
           {
@@ -9705,13 +10647,13 @@
             }
           },
           {
-            "description": "When `true`, refresh the chronological register history from the German registries before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+            "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refresh the chronological register history from the German registries before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
             "in": "query",
             "name": "fetch_realtime",
             "required": false,
             "schema": {
               "default": false,
-              "description": "When `true`, refresh the chronological register history from the German registries before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+              "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refresh the chronological register history from the German registries before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
               "title": "Fetch Realtime",
               "type": "boolean"
             }
@@ -9908,13 +10850,13 @@
             }
           },
           {
-            "description": "When `true`, scrape the Liste der Gesellschafter from the German registries and re-parse it before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+            "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, scrape the Liste der Gesellschafter from the German registries and re-parse it before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
             "in": "query",
             "name": "fetch_realtime",
             "required": false,
             "schema": {
               "default": false,
-              "description": "When `true`, scrape the Liste der Gesellschafter from the German registries and re-parse it before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+              "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, scrape the Liste der Gesellschafter from the German registries and re-parse it before responding. Adds upstream latency (typically several seconds). Scraping failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
               "title": "Fetch Realtime",
               "type": "boolean"
             }
@@ -10111,13 +11053,13 @@
             }
           },
           {
-            "description": "When `true`, refetch the latest Liste der Gesellschafter for every German GmbH/UG visited in the ownership chain before building the graph. Adds noticeable latency. Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+            "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refetch the latest Liste der Gesellschafter for every German GmbH/UG visited in the ownership chain before building the graph. Adds noticeable latency. Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
             "in": "query",
             "name": "fetch_realtime",
             "required": false,
             "schema": {
               "default": false,
-              "description": "When `true`, refetch the latest Liste der Gesellschafter for every German GmbH/UG visited in the ownership chain before building the graph. Adds noticeable latency. Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
+              "description": "Only affects German (DE) companies; ignored for Swiss (CH) and Austrian (AT) companies, with no realtime surcharge. When `true`, refetch the latest Liste der Gesellschafter for every German GmbH/UG visited in the ownership chain before building the graph. Adds noticeable latency. Failures are surfaced via `freshness.realtime_fetching_status` rather than failing the request.",
               "title": "Fetch Realtime",
               "type": "boolean"
             }
@@ -10288,6 +11230,678 @@
             "label": "JavaScript (fetch)",
             "lang": "js",
             "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/companies/DEF1103R.HRB279792B/ubo\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
+    "/v1/feeds/insolvencies": {
+      "get": {
+        "description": "**Beta.** Poll company events in discovery order. On the first\ncall, `since` defaults to the last day; it must be within the last seven days.\nPass `next_cursor` back unchanged, including after an empty page. Cursors\npersist across deploys and restarts. A discovery position older than seven\ndays expires; restart with a recent `since`.\nRows are released after a settlement delay. `has_more=true` means continue\npaging immediately; otherwise poll again later. Filters use the alert feeds'\nmatching rules. A reparse can resurface an event id: clients must deduplicate\non `id`. Only company information is returned. A page with events costs one\ncredit; an empty page costs zero credits. An API key is required. Schuldenruf notices are included only when selected by name.\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "operationId": "poll_insolvencies_v1_feeds_insolvencies_get",
+        "parameters": [
+          {
+            "description": "Persistent discovery cursor from the previous response's next_cursor.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Persistent discovery cursor from the previous response's next_cursor.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Initial discovery timestamp; ignored when cursor is supplied.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Initial discovery timestamp; ignored when cursor is supplied.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Maximum events returned in this page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Maximum events returned in this page.",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Notice country; defaults to DE and selects the country's filter vocabulary.",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Country",
+              "default": "DE",
+              "description": "Notice country; defaults to DE and selects the country's filter vocabulary."
+            }
+          },
+          {
+            "description": "Company Bundesland in the selected country; repeated values are matched with OR.",
+            "in": "query",
+            "name": "bundesland",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Bundesland"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company Bundesland in the selected country; repeated values are matched with OR.",
+              "title": "Bundesland"
+            }
+          },
+          {
+            "description": "Swiss notice canton for country=CH; repeated values are matched with OR.",
+            "in": "query",
+            "name": "canton",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Canton"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Swiss notice canton for country=CH; repeated values are matched with OR.",
+              "title": "Canton"
+            }
+          },
+          {
+            "description": "Company industry category; repeated values are matched with OR.",
+            "in": "query",
+            "name": "industry_slug",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/IndustrySlug"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company industry category; repeated values are matched with OR.",
+              "title": "Industry Slug"
+            }
+          },
+          {
+            "description": "Company legal form; repeated values are matched with OR and UG is distinguished from GmbH.",
+            "in": "query",
+            "name": "rechtsform",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Rechtsform"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company legal form; repeated values are matched with OR and UG is distinguished from GmbH.",
+              "title": "Rechtsform"
+            }
+          },
+          {
+            "description": "Notice category; repeated values are matched with OR and Schuldenruf must be requested by name.",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/InsolvencyCategory"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Notice category; repeated values are matched with OR and Schuldenruf must be requested by name.",
+              "title": "Category"
+            }
+          },
+          {
+            "description": "Inclusive lower bound on the company's latest known revenue in euros.",
+            "in": "query",
+            "name": "revenue_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Inclusive lower bound on the company's latest known revenue in euros.",
+              "title": "Revenue Min"
+            }
+          },
+          {
+            "description": "Exclusive upper bound on the company's latest known revenue in euros.",
+            "in": "query",
+            "name": "revenue_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Exclusive upper bound on the company's latest known revenue in euros.",
+              "title": "Revenue Max"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "limit: Input should be less than or equal to 50",
+                  "errors": [
+                    {
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
+                    }
+                  ],
+                  "instance": "/v1/companies/search",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 422,
+                  "title": "Request validation failed.",
+                  "type": "https://api.firmendata.com/problems/validation-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Request validation failed; see `errors[]` for per-field details."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "Poll insolvency notices (Beta)",
+        "tags": [
+          "Feeds"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/feeds/insolvencies\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/feeds/insolvencies\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/feeds/insolvencies\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
+    "/v1/feeds/new-companies": {
+      "get": {
+        "description": "**Beta.** Poll company events in discovery order. On the first\ncall, `since` defaults to the last day; it must be within the last seven days.\nPass `next_cursor` back unchanged, including after an empty page. Cursors\npersist across deploys and restarts. A discovery position older than seven\ndays expires; restart with a recent `since`.\nRows are released after a settlement delay. `has_more=true` means continue\npaging immediately; otherwise poll again later. Filters use the alert feeds'\nmatching rules. A reparse can resurface an event id: clients must deduplicate\non `id`. Only company information is returned. A page with events costs one\ncredit; an empty page costs zero credits. An API key is required. Swiss companies appear only when discovered by the SHAB new-company scanner.\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "operationId": "poll_new_companies_v1_feeds_new_companies_get",
+        "parameters": [
+          {
+            "description": "Persistent discovery cursor from the previous response's next_cursor.",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Persistent discovery cursor from the previous response's next_cursor.",
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Initial discovery timestamp; ignored when cursor is supplied.",
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Initial discovery timestamp; ignored when cursor is supplied.",
+              "title": "Since"
+            }
+          },
+          {
+            "description": "Maximum events returned in this page.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "description": "Maximum events returned in this page.",
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Company country; omit to include all countries.",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Country"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company country; omit to include all countries.",
+              "title": "Country"
+            }
+          },
+          {
+            "description": "Company Bundesland; repeated values are matched with OR.",
+            "in": "query",
+            "name": "bundesland",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Bundesland"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company Bundesland; repeated values are matched with OR.",
+              "title": "Bundesland"
+            }
+          },
+          {
+            "description": "Swiss company canton; repeated values are matched with OR.",
+            "in": "query",
+            "name": "canton",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Canton"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Swiss company canton; repeated values are matched with OR.",
+              "title": "Canton"
+            }
+          },
+          {
+            "description": "Company industry category; repeated values are matched with OR.",
+            "in": "query",
+            "name": "industry_slug",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/IndustrySlug"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company industry category; repeated values are matched with OR.",
+              "title": "Industry Slug"
+            }
+          },
+          {
+            "description": "Company legal form; repeated values are matched with OR and UG is distinguished from GmbH.",
+            "in": "query",
+            "name": "rechtsform",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/Rechtsform"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company legal form; repeated values are matched with OR and UG is distinguished from GmbH.",
+              "title": "Rechtsform"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "limit: Input should be less than or equal to 50",
+                  "errors": [
+                    {
+                      "message": "Input should be less than or equal to 50",
+                      "param": "limit"
+                    }
+                  ],
+                  "instance": "/v1/companies/search",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 422,
+                  "title": "Request validation failed.",
+                  "type": "https://api.firmendata.com/problems/validation-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Request validation failed; see `errors[]` for per-field details."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "Poll new companies (Beta)",
+        "tags": [
+          "Feeds"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/feeds/new-companies\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/feeds/new-companies\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/feeds/new-companies\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
           }
         ]
       }
@@ -10955,7 +12569,7 @@
         ]
       },
       "post": {
-        "description": "Create a webhook, email, or async (poll-only) subscription for a single\ncompany.\n\n## Async (poll-only) subscriptions\n\nPass `\"notification_type\": null` (and omit both `webhook_url` and\n`recipient_email`) to create a poll-only subscription. firmendata\nperforms the same change detection as for webhook/email, but instead of\ncalling out to your infrastructure on each change it records the\nrendered payload as a `subscription_event`. Retrieve change events\nafterwards via `GET /v1/subscriptions/{subscription_id}/events`,\nwhere `subscription_id` is the value returned in this response (the\n\"job id\" the response carries). `webhook_secret` is `null` for async\nsubscriptions — there is no outbound HTTP to sign.\n\n## Webhook signature verification\n\nfirmendata signs **every** outgoing webhook request with HMAC-SHA256\nso receivers can verify the request actually came from firmendata.\nVerify on every incoming POST:\n\n* `X-Firmendata-Signature: sha256=<hex>` — HMAC-SHA256 of\n  `f\"{X-Firmendata-Timestamp}.{raw_body}\"` keyed by the\n  `webhook_secret` returned in this response. Use a constant-time\n  comparison.\n* `X-Firmendata-Timestamp: <unix-seconds>` — reject values older than\n  5 minutes to defeat replay attacks.\n* `X-Firmendata-Delivery-Id: <uuid>` — idempotency key; safe to dedupe\n  on. firmendata may re-POST the same delivery id after a transient\n  receiver error.\n* `X-Firmendata-Event-Type: <subscription_type>.updated` — e.g.\n  `details.updated`, `doc_articles_of_association.updated`.\n\nThe response carries a one-time **`webhook_secret`**. Store it now —\nit is **not** recoverable later. To rotate, delete the subscription\nand re-create it.\n\n## Defaults\n\n* `mode` → `recurring` — see `mode` for the `one_time` alternative.\n* `notification_type` → `null` (async, poll-only) — see `notification_type` for the `webhook` / `email` alternatives.\n* `cadence` → `daily`.\n* `language` → `en` (affects email rendering only).\n\n## Email-mode rendering\n\nWhen `notification_type=email`, the recipient's inbox shows:\n\n* **Body table** with the company name, company id (`eu_id`),\n  notification type, publish date, and — for `doc_*` subscriptions —\n  the document type and file id. No authenticated `/v1/...` API URLs\n  are rendered (email recipients carry no bearer token); a single\n  public **\"View company on FirmenData\"** button links to\n  `https://firmendata.com/{language}/company/{eu_id}`.\n* **PDF attachment** (only for `doc_*` subscriptions) — the actual\n  register document (Articles of Association / Anmeldung /\n  Musterprotokoll / Liste der Gesellschafter) attached as a\n  `application/pdf` MIME part. Recipients can save / forward / parse\n  the file straight from their inbox.\n\nParsed-data subscriptions (`details`, `history`, `shareholders`,\n`ubo`) deliver the body table only — the structured JSON itself\nremains accessible via the v1 API for authenticated clients, and\nthe email recipient gets a human summary.\n\n## Cadence semantics\n\n`cadence` controls how often you wish to receive notifications. A\nnotification is only delivered when there is an actual change since\nthe previous successful delivery — no update means no notification.\n`immediately` delivers an update as soon as it is detected, with a\nservice-level objective of within 1 hour of publication.\n`daily` / `weekly` / `monthly` batch the check at the named cadence.\n\nFor `recurring` subscriptions, the **first** delivery is a snapshot\nof the current state; after that, deliveries only fire on actual\nupdates.\n\nFor `one_time` subscriptions, `cadence` is the retry spacing while\nwe wait for the data to become available; the subscription stops on\nthe first successful delivery.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Create a webhook, email, or async (poll-only) subscription for a single\nGerman (DE) company. Subscriptions are currently available for German\ncompanies only.\n\n## Async (poll-only) subscriptions\n\nPass `\"notification_type\": null` (and omit both `webhook_url` and\n`recipient_email`) to create a poll-only subscription. firmendata\nperforms the same change detection as for webhook/email, but instead of\ncalling out to your infrastructure on each change it records the\nrendered payload as a `subscription_event`. Retrieve change events\nafterwards via `GET /v1/subscriptions/{subscription_id}/events`,\nwhere `subscription_id` is the value returned in this response (the\n\"job id\" the response carries). `webhook_secret` is `null` for async\nsubscriptions — there is no outbound HTTP to sign.\n\n## Webhook signature verification\n\nfirmendata signs **every** outgoing webhook request with HMAC-SHA256\nso receivers can verify the request actually came from firmendata.\nVerify on every incoming POST:\n\n* `X-Firmendata-Signature: sha256=<hex>` — HMAC-SHA256 of\n  `f\"{X-Firmendata-Timestamp}.{raw_body}\"` keyed by the\n  `webhook_secret` returned in this response. Use a constant-time\n  comparison.\n* `X-Firmendata-Timestamp: <unix-seconds>` — reject values older than\n  5 minutes to defeat replay attacks.\n* `X-Firmendata-Delivery-Id: <uuid>` — idempotency key; safe to dedupe\n  on. firmendata may re-POST the same delivery id after a transient\n  receiver error.\n* `X-Firmendata-Event-Type: <subscription_type>.updated` — e.g.\n  `details.updated`, `doc_articles_of_association.updated`.\n\nThe response carries a one-time **`webhook_secret`**. Store it now —\nit is **not** recoverable later. To rotate, delete the subscription\nand re-create it.\n\n## Defaults\n\n* `mode` → `recurring` — see `mode` for the `one_time` alternative.\n* `notification_type` → `null` (async, poll-only) — see `notification_type` for the `webhook` / `email` alternatives.\n* `cadence` → `daily`.\n* `language` → `en` (affects email rendering only).\n\n## Email-mode rendering\n\nWhen `notification_type=email`, the recipient's inbox shows:\n\n* **Body table** with the company name, company id (`eu_id`),\n  notification type, publish date, and — for `doc_*` subscriptions —\n  the document type and file id. No authenticated `/v1/...` API URLs\n  are rendered (email recipients carry no bearer token); a single\n  public **\"View company on FirmenData\"** button links to\n  `https://firmendata.com/{language}/company/{eu_id}`.\n* **PDF attachment** (only for `doc_*` subscriptions) — the actual\n  register document (Articles of Association / Anmeldung /\n  Musterprotokoll / Liste der Gesellschafter) attached as a\n  `application/pdf` MIME part. Recipients can save / forward / parse\n  the file straight from their inbox.\n\nParsed-data subscriptions (`details`, `history`, `shareholders`,\n`ubo`) deliver the body table only — the structured JSON itself\nremains accessible via the v1 API for authenticated clients, and\nthe email recipient gets a human summary.\n\n## Cadence semantics\n\n`cadence` controls how often you wish to receive notifications. A\nnotification is only delivered when there is an actual change since\nthe previous successful delivery — no update means no notification.\n`immediately` delivers an update as soon as it is detected, with a\nservice-level objective of within 1 hour of publication.\n`daily` / `weekly` / `monthly` batch the check at the named cadence.\n\nFor `recurring` subscriptions, the **first** delivery is a snapshot\nof the current state; after that, deliveries only fire on actual\nupdates.\n\nFor `one_time` subscriptions, `cadence` is the retry spacing while\nwe wait for the data to become available; the subscription stops on\nthe first successful delivery.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "createSubscription",
         "requestBody": {
           "content": {
@@ -12311,6 +13925,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Beta company event streams, polled with persistent discovery cursors.",
+      "name": "Feeds"
+    },
     {
       "description": "Find companies by free-text query and firmographic filters. Use `autocomplete` for fast suggestions and `search` for programmatic, filterable lookups.\n\n### Filter values\n\nEnum values are **case-insensitive** and tolerate the umlaut spellings German text arrives in, so `gmbh`, `muenchen` and `Baden-Wurttemberg` all resolve. Common abbreviations and alternative names work too (`NRW`, `Bavaria`, `Charlottenburg`, `Amtsgericht München`). A value that could mean two different things is rejected rather than guessed at — `Frankfurt` names two courts, so spell out `Frankfurt am Main` or `Frankfurt/Oder`. Unknown values and unknown parameter names are rejected with `422` too, never silently ignored.\n\n### Repeating a filter\n\nFilters that accept several values (`city`, `bundesland`, `canton`, `rechtsform`, `wz_2025_code`, `industry_slug`, `legal_status`, `membership`, `tender_role`) OR-merge their values and accept any of the three encodings HTTP clients produce:\n\n```\n?rechtsform=GmbH&rechtsform=AG     repeated key\n?rechtsform=GmbH,AG                comma-separated\n?rechtsform[]=GmbH&rechtsform[]=AG bracket / indexed\n```\n\nDifferent filters are AND-merged. `city`, `bundesland` and `canton` are the one exception: they form a single location filter, so a company matches when it is in any selected city **or** any selected federal state or canton.\n\n### Reading the financials\n\nEach figure is resolved to the most recent filing that actually carries it, so they can come from *different* fiscal years — `revenue_year`, `profit_year`, `total_assets_year` and `employee_count_year` say which. Don't assume two of them share a year when computing a ratio. `financial_year` is a separate thing: the latest year the company filed anything at all.\n\nCoverage differs sharply between the metrics, and it is not a data-quality gap — it follows German filing law. Small and medium-sized companies file abridged accounts under §§ 266, 276 HGB: a balance sheet, but no profit-and-loss statement, and no headcount. So the balance-sheet total is available for far more companies than revenue or employees are. **If you are filtering on company size, use `total_assets_min` / `total_assets_max` — the revenue bounds reach only the minority that publish a full P&L.**",
       "name": "Search"

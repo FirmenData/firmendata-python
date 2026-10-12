@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.3.0
+
+Regenerated from the updated API contract. **Additive, non-breaking:**
+
+- Optional `country` (`DE`, `CH` or `AT`) on autocomplete in both clients.
+- Beta `feed_new_companies(**filters)` and `feed_insolvencies(**filters)`
+  methods on sync and async clients, with generated filter and response types.
+- `iter_feed_new_companies` and `iter_feed_insolvencies` drain available pages
+  while `has_more` is true, deduplicate event IDs within each run, and expose
+  `.next_cursor` after fully consumed pages for resuming, including empty pages.
+  Async variants use `async for`.
+- Generated types reflect Austrian countries, register types, courts, states
+  and legal forms, plus balance-sheet and income-statement positions and
+  latest equity in financial responses.
+- README documents feed polling, cursor persistence, deduplication and pricing:
+  1 credit per page with events; empty pages are free.
+
 ## 1.2.1
 
 Regenerated from the updated API contract. **Additive, non-breaking:**

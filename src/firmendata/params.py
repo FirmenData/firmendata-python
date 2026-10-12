@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict
 
-__all__ = ['SearchFilters', 'SubscriptionFilters']
+__all__ = ['SearchFilters', 'SubscriptionFilters', 'FeedNewCompaniesFilters', 'FeedInsolvenciesFilters']
 
 
 class SearchFilters(TypedDict, total=False):
@@ -27,17 +27,17 @@ class SearchFilters(TypedDict, total=False):
     # Exact Registernummer, digits only (`12345` for HRB 12345). Register numbers repeat ac...
     register_number: NotRequired[int]
     # Country of the company register. Single-valued.
-    country: NotRequired[Literal['DE', 'CH']]
+    country: NotRequired[Literal['DE', 'CH', 'AT']]
     # Swiss address canton codes. Multi-valued; OR-merged with `bundesland`.
     canton: NotRequired[list[Literal['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH']]]
     # Register type. Single-valued.
-    register_type: NotRequired[Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR']]
+    register_type: NotRequired[Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR', 'AT-FB']]
     # Registering court (Registergericht), by its canonical Handelsregister name. An `Amtsg...
-    register_court: NotRequired[Literal['Aachen', 'Ahaus', 'Amberg', 'Ansbach', 'Arnsberg', 'Aschaffenburg', 'Augsburg', 'Aurich', 'Bad Hersfeld', 'Bad Homburg v.d.H.', 'Bad Kreuznach', 'Bad Oeynhausen', 'Bamberg', 'Bayreuth', 'Berlin (Charlottenburg)', 'Bielefeld', 'Bocholt', 'Bochum', 'Bonn', 'Borken', 'Braunschweig', 'Bremen', 'Bremerhaven', 'Chemnitz', 'Coburg', 'Coesfeld', 'Cottbus', 'Darmstadt', 'Deggendorf', 'Dortmund', 'Dresden', 'Duisburg', 'Dülmen', 'Düren', 'Düsseldorf', 'Eschwege', 'Essen', 'Flensburg', 'Frankfurt am Main', 'Frankfurt/Oder', 'Freiburg', 'Friedberg', 'Fritzlar', 'Fulda', 'Fürth', 'Gelsenkirchen', 'Gießen', 'Gronau', 'Göttingen', 'Gütersloh', 'Hagen', 'Hamburg', 'Hamm', 'Hanau', 'Hannover', 'Hildesheim', 'Hof', 'Homburg', 'Ingolstadt', 'Iserlohn', 'Jena', 'Kaiserslautern', 'Kassel', 'Kempten (Allgäu)', 'Kerpen', 'Kiel', 'Kleve', 'Koblenz', 'Korbach', 'Krefeld', 'Köln', 'Königstein', 'Landau', 'Landshut', 'Langenfeld', 'Lebach', 'Leipzig', 'Lemgo', 'Limburg', 'Ludwigshafen a.Rhein (Ludwigshafen)', 'Lübeck', 'Lüdinghausen', 'Lüneburg', 'Mainz', 'Mannheim', 'Marburg', 'Memmingen', 'Merzig', 'Montabaur', 'Mönchengladbach', 'München', 'Münster', 'Neubrandenburg', 'Neunkirchen', 'Neuruppin', 'Neuss', 'Nürnberg', 'Offenbach am Main', 'Oldenburg (Oldenburg)', 'Osnabrück', 'Ottweiler', 'Paderborn', 'Passau', 'Pinneberg', 'Potsdam', 'Recklinghausen', 'Regensburg', 'Rostock', 'Saarbrücken', 'Saarlouis', 'Schleiden', 'Schweinfurt', 'Schwerin', 'Siegburg', 'Siegen', 'St. Ingbert (St Ingbert)', 'St. Wendel (St Wendel)', 'Stadthagen', 'Steinfurt', 'Stendal', 'Stralsund', 'Straubing', 'Stuttgart', 'Tostedt', 'Traunstein', 'Ulm', 'Völklingen', 'Walsrode', 'Weiden i. d. OPf.', 'Wetzlar', 'Wiesbaden', 'Wittlich', 'Wuppertal', 'Würzburg', 'Zweibrücken']]
+    register_court: NotRequired[Literal['Aachen', 'Ahaus', 'Amberg', 'Ansbach', 'Arnsberg', 'Aschaffenburg', 'Augsburg', 'Aurich', 'Bad Hersfeld', 'Bad Homburg v.d.H.', 'Bad Kreuznach', 'Bad Oeynhausen', 'Bamberg', 'Bayreuth', 'Berlin (Charlottenburg)', 'Bielefeld', 'Bocholt', 'Bochum', 'Bonn', 'Borken', 'Braunschweig', 'Bremen', 'Bremerhaven', 'Chemnitz', 'Coburg', 'Coesfeld', 'Cottbus', 'Darmstadt', 'Deggendorf', 'Dortmund', 'Dresden', 'Duisburg', 'Dülmen', 'Düren', 'Düsseldorf', 'Eschwege', 'Essen', 'Flensburg', 'Frankfurt am Main', 'Frankfurt/Oder', 'Freiburg', 'Friedberg', 'Fritzlar', 'Fulda', 'Fürth', 'Gelsenkirchen', 'Gießen', 'Gronau', 'Göttingen', 'Gütersloh', 'Hagen', 'Hamburg', 'Hamm', 'Hanau', 'Handelsgericht Wien', 'Hannover', 'Hildesheim', 'Hof', 'Homburg', 'Ingolstadt', 'Iserlohn', 'Jena', 'Kaiserslautern', 'Kassel', 'Kempten (Allgäu)', 'Kerpen', 'Kiel', 'Kleve', 'Koblenz', 'Korbach', 'Krefeld', 'Köln', 'Königstein', 'Landau', 'Landesgericht Eisenstadt', 'Landesgericht Feldkirch', 'Landesgericht Innsbruck', 'Landesgericht Klagenfurt', 'Landesgericht Korneuburg', 'Landesgericht Krems an der Donau', 'Landesgericht Leoben', 'Landesgericht Linz', 'Landesgericht Ried im Innkreis', 'Landesgericht Salzburg', 'Landesgericht St. Pölten', 'Landesgericht Steyr', 'Landesgericht Wels', 'Landesgericht Wiener Neustadt', 'Landesgericht für Zivilrechtssachen Graz', 'Landshut', 'Langenfeld', 'Lebach', 'Leipzig', 'Lemgo', 'Limburg', 'Ludwigshafen a.Rhein (Ludwigshafen)', 'Lübeck', 'Lüdinghausen', 'Lüneburg', 'Mainz', 'Mannheim', 'Marburg', 'Memmingen', 'Merzig', 'Montabaur', 'Mönchengladbach', 'München', 'Münster', 'Neubrandenburg', 'Neunkirchen', 'Neuruppin', 'Neuss', 'Nürnberg', 'Offenbach am Main', 'Oldenburg (Oldenburg)', 'Osnabrück', 'Ottweiler', 'Paderborn', 'Passau', 'Pinneberg', 'Potsdam', 'Recklinghausen', 'Regensburg', 'Rostock', 'Saarbrücken', 'Saarlouis', 'Schleiden', 'Schweinfurt', 'Schwerin', 'Siegburg', 'Siegen', 'St. Ingbert (St Ingbert)', 'St. Wendel (St Wendel)', 'Stadthagen', 'Steinfurt', 'Stendal', 'Stralsund', 'Straubing', 'Stuttgart', 'Tostedt', 'Traunstein', 'Ulm', 'Völklingen', 'Walsrode', 'Weiden i. d. OPf.', 'Wetzlar', 'Wiesbaden', 'Wittlich', 'Wuppertal', 'Würzburg', 'Zweibrücken']]
     # Registered seat city, matched exactly but umlaut-insensitively. Compare with `registe...
     city: NotRequired[list[str]]
-    # German federal state. Multi-valued; also accepts postal codes (`BY`, `NRW`) and Engli...
-    bundesland: NotRequired[list[Literal['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thüringen']]]
+    # German or Austrian federal state. Multi-valued; also accepts postal codes (`BY`, `NRW...
+    bundesland: NotRequired[list[Literal['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thüringen', 'Burgenland', 'Kärnten', 'Niederösterreich', 'Oberösterreich', 'Salzburg', 'Steiermark', 'Tirol', 'Vorarlberg', 'Wien']]]
     # Earliest founding date (inclusive, `YYYY-MM-DD`).
     founded_from: NotRequired[str]
     # Latest founding date (inclusive, `YYYY-MM-DD`).
@@ -62,8 +62,8 @@ class SearchFilters(TypedDict, total=False):
     wz_2025_code: NotRequired[list[str]]
     # High-level firmendata industry category. Expands server-side to WZ 2025 divisions. Mu...
     industry_slug: NotRequired[list[Literal['automotive', 'chemicals', 'construction', 'consulting', 'education', 'energy', 'financial_services', 'food', 'healthcare', 'holdings', 'hospitality', 'insurance', 'legal', 'logistics', 'manufacturing', 'media', 'mining', 'public_sector', 'technology', 'telecom', 'trade']]]
-    # German legal form. Multi-valued. Common abbreviations and the long forms are accepted...
-    rechtsform: NotRequired[list[Literal['GmbH', 'KG', 'e.K.', 'eGbR', 'UG', 'GmbH & Co. KG', 'OHG', 'PartG', 'e.V.', 'AG', 'eG', 'ausländische Rechtsform (HRB)', 'gGmbH', 'UG & Co. KG', 'ausländische Rechtsform', 'SE', 'sonstige juristische Person', 'EWIV', 'KGaA', 'Ltd. & Co. KG', 'sonstige juristische Person (HRA)', 'GmbH & Co. OHG', 'VVaG', 'SE & Co. KG', 'ausländische Rechtsform (HRA)', 'AG & Co. KG', 'ausländische Rechtsform (PR)', 'SCE', 'ausländische Rechtsform (GnR)', 'Stiftung & Co. KG', 'eG & Co. KG', 'Einzelunternehmen (CH)', 'Kollektivgesellschaft (CH)', 'Kommanditgesellschaft (CH)', 'Kommanditaktiengesellschaft (CH)', 'AG (CH)', 'GmbH (CH)', 'Genossenschaft (CH)', 'Verein (CH)', 'Stiftung (CH)', 'Zweigniederlassung ausl. Ges. (CH)', 'Besondere Rechtsform (CH)', 'KmGK (CH)', 'SICAV (CH)', 'SICAF (CH)', 'Institut des öffentlichen Rechts (CH)', 'Nichtkaufmännische Prokura (CH)', 'Gemeinderschaft (CH)', 'Zweigniederlassung (CH)']]]
+    # German, Swiss or Austrian legal form. Multi-valued. Common abbreviations and the long...
+    rechtsform: NotRequired[list[Literal['GmbH', 'KG', 'e.K.', 'eGbR', 'UG', 'GmbH & Co. KG', 'OHG', 'PartG', 'e.V.', 'AG', 'eG', 'ausländische Rechtsform (HRB)', 'gGmbH', 'UG & Co. KG', 'ausländische Rechtsform', 'SE', 'sonstige juristische Person', 'EWIV', 'KGaA', 'Ltd. & Co. KG', 'sonstige juristische Person (HRA)', 'GmbH & Co. OHG', 'VVaG', 'SE & Co. KG', 'ausländische Rechtsform (HRA)', 'AG & Co. KG', 'ausländische Rechtsform (PR)', 'SCE', 'ausländische Rechtsform (GnR)', 'Stiftung & Co. KG', 'eG & Co. KG', 'Einzelunternehmen (CH)', 'Kollektivgesellschaft (CH)', 'Kommanditgesellschaft (CH)', 'Kommanditaktiengesellschaft (CH)', 'AG (CH)', 'GmbH (CH)', 'Genossenschaft (CH)', 'Verein (CH)', 'Stiftung (CH)', 'Zweigniederlassung ausl. Ges. (CH)', 'Besondere Rechtsform (CH)', 'KmGK (CH)', 'SICAV (CH)', 'SICAF (CH)', 'Institut des öffentlichen Rechts (CH)', 'Nichtkaufmännische Prokura (CH)', 'Gemeinderschaft (CH)', 'Zweigniederlassung (CH)', 'GmbH (AT)', 'AG (AT)', 'FlexCo (AT)', 'KG (AT)', 'OG (AT)', 'e.U. (AT)', 'Genossenschaft (AT)', 'Privatstiftung (AT)', 'Sparkasse (AT)', 'VVaG (AT)', 'SE (AT)', 'EWIV (AT)', 'Sonstiger Rechtsträger (AT)', 'OHG (AT, alt)', 'KEG (AT, alt)', 'OEG (AT, alt)', 'Einzelkaufmann (AT, alt)']]]
     # Name of an associated person — current or historical board member, shareholder or par...
     person_name: NotRequired[str]
     # CPV (Common Procurement Vocabulary) prefix from the EU tenders a company won — `45` m...
@@ -112,3 +112,49 @@ class SubscriptionFilters(TypedDict, total=False):
     cursor: NotRequired[str]
     # Rows to skip. Prefer `cursor`; the two cannot be combined.
     offset: NotRequired[int]
+
+class FeedNewCompaniesFilters(TypedDict, total=False):
+    """Poll new companies (Beta)."""
+
+    # Persistent discovery cursor from the previous response's next_cursor.
+    cursor: NotRequired[str]
+    # Initial discovery timestamp; ignored when cursor is supplied.
+    since: NotRequired[str]
+    # Maximum events returned in this page.
+    limit: NotRequired[int]
+    # Company country; omit to include all countries.
+    country: NotRequired[Literal['DE', 'CH', 'AT']]
+    # Company Bundesland; repeated values are matched with OR.
+    bundesland: NotRequired[list[Literal['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thüringen', 'Burgenland', 'Kärnten', 'Niederösterreich', 'Oberösterreich', 'Salzburg', 'Steiermark', 'Tirol', 'Vorarlberg', 'Wien']]]
+    # Swiss company canton; repeated values are matched with OR.
+    canton: NotRequired[list[Literal['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH']]]
+    # Company industry category; repeated values are matched with OR.
+    industry_slug: NotRequired[list[Literal['automotive', 'chemicals', 'construction', 'consulting', 'education', 'energy', 'financial_services', 'food', 'healthcare', 'holdings', 'hospitality', 'insurance', 'legal', 'logistics', 'manufacturing', 'media', 'mining', 'public_sector', 'technology', 'telecom', 'trade']]]
+    # Company legal form; repeated values are matched with OR and UG is distinguished from...
+    rechtsform: NotRequired[list[Literal['GmbH', 'KG', 'e.K.', 'eGbR', 'UG', 'GmbH & Co. KG', 'OHG', 'PartG', 'e.V.', 'AG', 'eG', 'ausländische Rechtsform (HRB)', 'gGmbH', 'UG & Co. KG', 'ausländische Rechtsform', 'SE', 'sonstige juristische Person', 'EWIV', 'KGaA', 'Ltd. & Co. KG', 'sonstige juristische Person (HRA)', 'GmbH & Co. OHG', 'VVaG', 'SE & Co. KG', 'ausländische Rechtsform (HRA)', 'AG & Co. KG', 'ausländische Rechtsform (PR)', 'SCE', 'ausländische Rechtsform (GnR)', 'Stiftung & Co. KG', 'eG & Co. KG', 'Einzelunternehmen (CH)', 'Kollektivgesellschaft (CH)', 'Kommanditgesellschaft (CH)', 'Kommanditaktiengesellschaft (CH)', 'AG (CH)', 'GmbH (CH)', 'Genossenschaft (CH)', 'Verein (CH)', 'Stiftung (CH)', 'Zweigniederlassung ausl. Ges. (CH)', 'Besondere Rechtsform (CH)', 'KmGK (CH)', 'SICAV (CH)', 'SICAF (CH)', 'Institut des öffentlichen Rechts (CH)', 'Nichtkaufmännische Prokura (CH)', 'Gemeinderschaft (CH)', 'Zweigniederlassung (CH)', 'GmbH (AT)', 'AG (AT)', 'FlexCo (AT)', 'KG (AT)', 'OG (AT)', 'e.U. (AT)', 'Genossenschaft (AT)', 'Privatstiftung (AT)', 'Sparkasse (AT)', 'VVaG (AT)', 'SE (AT)', 'EWIV (AT)', 'Sonstiger Rechtsträger (AT)', 'OHG (AT, alt)', 'KEG (AT, alt)', 'OEG (AT, alt)', 'Einzelkaufmann (AT, alt)']]]
+
+class FeedInsolvenciesFilters(TypedDict, total=False):
+    """Poll insolvency notices (Beta)."""
+
+    # Persistent discovery cursor from the previous response's next_cursor.
+    cursor: NotRequired[str]
+    # Initial discovery timestamp; ignored when cursor is supplied.
+    since: NotRequired[str]
+    # Maximum events returned in this page.
+    limit: NotRequired[int]
+    # Notice country; defaults to DE and selects the country's filter vocabulary.
+    country: NotRequired[Literal['DE', 'CH', 'AT']]
+    # Company Bundesland in the selected country; repeated values are matched with OR.
+    bundesland: NotRequired[list[Literal['Baden-Württemberg', 'Bayern', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hessen', 'Mecklenburg-Vorpommern', 'Niedersachsen', 'Nordrhein-Westfalen', 'Rheinland-Pfalz', 'Saarland', 'Sachsen', 'Sachsen-Anhalt', 'Schleswig-Holstein', 'Thüringen', 'Burgenland', 'Kärnten', 'Niederösterreich', 'Oberösterreich', 'Salzburg', 'Steiermark', 'Tirol', 'Vorarlberg', 'Wien']]]
+    # Swiss notice canton for country=CH; repeated values are matched with OR.
+    canton: NotRequired[list[Literal['AG', 'AI', 'AR', 'BE', 'BL', 'BS', 'FR', 'GE', 'GL', 'GR', 'JU', 'LU', 'NE', 'NW', 'OW', 'SG', 'SH', 'SO', 'SZ', 'TG', 'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH']]]
+    # Company industry category; repeated values are matched with OR.
+    industry_slug: NotRequired[list[Literal['automotive', 'chemicals', 'construction', 'consulting', 'education', 'energy', 'financial_services', 'food', 'healthcare', 'holdings', 'hospitality', 'insurance', 'legal', 'logistics', 'manufacturing', 'media', 'mining', 'public_sector', 'technology', 'telecom', 'trade']]]
+    # Company legal form; repeated values are matched with OR and UG is distinguished from...
+    rechtsform: NotRequired[list[Literal['GmbH', 'KG', 'e.K.', 'eGbR', 'UG', 'GmbH & Co. KG', 'OHG', 'PartG', 'e.V.', 'AG', 'eG', 'ausländische Rechtsform (HRB)', 'gGmbH', 'UG & Co. KG', 'ausländische Rechtsform', 'SE', 'sonstige juristische Person', 'EWIV', 'KGaA', 'Ltd. & Co. KG', 'sonstige juristische Person (HRA)', 'GmbH & Co. OHG', 'VVaG', 'SE & Co. KG', 'ausländische Rechtsform (HRA)', 'AG & Co. KG', 'ausländische Rechtsform (PR)', 'SCE', 'ausländische Rechtsform (GnR)', 'Stiftung & Co. KG', 'eG & Co. KG', 'Einzelunternehmen (CH)', 'Kollektivgesellschaft (CH)', 'Kommanditgesellschaft (CH)', 'Kommanditaktiengesellschaft (CH)', 'AG (CH)', 'GmbH (CH)', 'Genossenschaft (CH)', 'Verein (CH)', 'Stiftung (CH)', 'Zweigniederlassung ausl. Ges. (CH)', 'Besondere Rechtsform (CH)', 'KmGK (CH)', 'SICAV (CH)', 'SICAF (CH)', 'Institut des öffentlichen Rechts (CH)', 'Nichtkaufmännische Prokura (CH)', 'Gemeinderschaft (CH)', 'Zweigniederlassung (CH)', 'GmbH (AT)', 'AG (AT)', 'FlexCo (AT)', 'KG (AT)', 'OG (AT)', 'e.U. (AT)', 'Genossenschaft (AT)', 'Privatstiftung (AT)', 'Sparkasse (AT)', 'VVaG (AT)', 'SE (AT)', 'EWIV (AT)', 'Sonstiger Rechtsträger (AT)', 'OHG (AT, alt)', 'KEG (AT, alt)', 'OEG (AT, alt)', 'Einzelkaufmann (AT, alt)']]]
+    # Notice category; repeated values are matched with OR and Schuldenruf must be requeste...
+    category: NotRequired[list[Literal['Abweisungen mangels Masse', 'Aufhebung der Nachlassstundung', 'Bestätigung des Nachlassvertrages', 'Definitive Nachlassstundung', 'Einstellung mangels Aktiven', 'Eröffnungen', 'Konkurseröffnung', 'Konkursverfahren eröffnet', 'Nachlassvertrag mit Vermögensabtretung', 'Nichteröffnung mangels Vermögens', 'Provisorische Nachlassstundung', 'Sanierungsverfahren eröffnet', 'Schluss des Konkursverfahrens', 'Schuldenruf', 'Sicherungsmaßnahmen', 'Widerruf des Konkurses']]]
+    # Inclusive lower bound on the company's latest known revenue in euros.
+    revenue_min: NotRequired[float]
+    # Exclusive upper bound on the company's latest known revenue in euros.
+    revenue_max: NotRequired[float]

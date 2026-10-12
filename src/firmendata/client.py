@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Unpack
+from typing import Any, Literal, Unpack
 
 import httpx
 
 from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient, _segment
+from ._feeds import FeedIterator
 from ._retry import DEFAULT_MAX_RETRIES, backoff_seconds, should_retry
 from .errors import APIConnectionError, APITimeoutError, RateLimitError
-from .params import SearchFilters, SubscriptionFilters
+from .params import (
+    FeedInsolvenciesFilters,
+    FeedNewCompaniesFilters,
+    SearchFilters,
+    SubscriptionFilters,
+)
 from .types import (
     AutocompleteResponse,
     CompanyDetail,
@@ -18,6 +24,7 @@ from .types import (
     CompanyDocumentList,
     CompanyFinancials,
     CompanyHistory,
+    FeedResponse,
     SearchResponse,
     ShareholdersReport,
     Subscription,
@@ -143,8 +150,12 @@ class FirmenData(_BaseClient):
             *,
             limit: int = 10,
             fetch_realtime: bool = False,
+            country: Literal["DE", "CH", "AT"] | None = None,
     ) -> AutocompleteResponse:
         """Company-name suggestions for a search box.
+
+        ``country`` restricts suggestions to DE, CH or AT; omit it to search
+        all countries.
 
         Free and callable without an API key — the one endpoint that is.
         Keyless calls are rate limited by address; supplying a key raises
@@ -159,7 +170,9 @@ class FirmenData(_BaseClient):
         """
         return self._request(
             "GET", "/v1/companies/autocomplete",
-            params={"q": q, "limit": limit, "fetch_realtime": fetch_realtime},
+            params={
+                "q": q, "limit": limit, "fetch_realtime": fetch_realtime, "country": country,
+            },
         )
 
     def search(self, **filters: Unpack[SearchFilters]) -> SearchResponse:
@@ -252,6 +265,47 @@ class FirmenData(_BaseClient):
                 "fetch_realtime": fetch_realtime,
             },
         )
+
+    # -- event feeds (Beta) ------------------------------------------------
+
+    def feed_new_companies(self, **filters: Unpack[FeedNewCompaniesFilters]) -> FeedResponse:
+        """One page of new-company events (Beta); requires an API key.
+
+        ``since`` is an ISO datetime for the first call only, at most seven
+        days back (defaults to the last day). ``limit`` is 1–100, default 50.
+        Persist ``next_cursor`` even after an empty page and pass it back
+        unchanged. Page immediately while ``has_more`` is true, otherwise
+        poll later. Deduplicate on event ``id``. A page with events costs
+        one credit; empty pages are free. Discovery positions older than
+        seven days expire; restart with a recent ``since``.
+        """
+        return self._request("GET", "/v1/feeds/new-companies", params=dict(filters))
+
+    def feed_insolvencies(self, **filters: Unpack[FeedInsolvenciesFilters]) -> FeedResponse:
+        """One page of insolvency notices (Beta).
+
+        See :meth:`feed_new_companies` for polling, cursors and pricing.
+        ``country`` defaults to DE; Schuldenruf must be selected by name
+        using ``category``.
+        """
+        return self._request("GET", "/v1/feeds/insolvencies", params=dict(filters))
+
+    def iter_feed_new_companies(
+            self, **filters: Unpack[FeedNewCompaniesFilters],
+    ) -> FeedIterator:
+        """Yield available new-company events; persist the iterator's ``next_cursor``.
+
+        Stops when ``has_more`` is false. The cursor advances after each
+        fully consumed page. IDs are deduplicated within this iteration;
+        persist IDs separately to deduplicate across polls.
+        """
+        return FeedIterator(lambda params: self.feed_new_companies(**params), dict(filters))
+
+    def iter_feed_insolvencies(
+            self, **filters: Unpack[FeedInsolvenciesFilters],
+    ) -> FeedIterator:
+        """Yield available insolvency notices. See :meth:`iter_feed_new_companies`."""
+        return FeedIterator(lambda params: self.feed_insolvencies(**params), dict(filters))
 
     # -- subscriptions -----------------------------------------------------
 

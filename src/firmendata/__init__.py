@@ -13,6 +13,7 @@ Everything else needs a key from https://firmendata.com/de/account/api-keys::
     company = fd.get_company("DEB1103R_HRB123456")
 """
 
+from ._feeds import AsyncFeedIterator, FeedIterator
 from ._version import __version__
 from .async_client import AsyncFirmenData
 from .client import FirmenData
@@ -35,6 +36,8 @@ __all__ = [
     "__version__",
     "FirmenData",
     "AsyncFirmenData",
+    "FeedIterator",
+    "AsyncFeedIterator",
     # errors
     "FirmenDataError",
     "APIError",

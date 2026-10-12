@@ -35,7 +35,7 @@ class ArticlesEntry(TypedDict):
 
 
 class AutocompleteHit(TypedDict):
-    country_code: Literal['DE', 'CH']
+    country_code: Literal['DE', 'CH', 'AT']
     display_name: str
     eu_id: str
     legal_name: str
@@ -83,6 +83,15 @@ Bundesland: TypeAlias = Literal[
     'Sachsen-Anhalt',
     'Schleswig-Holstein',
     'Thüringen',
+    'Burgenland',
+    'Kärnten',
+    'Niederösterreich',
+    'Oberösterreich',
+    'Salzburg',
+    'Steiermark',
+    'Tirol',
+    'Vorarlberg',
+    'Wien',
 ]
 
 
@@ -182,7 +191,7 @@ class CompanyListSummary(TypedDict):
 CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
-Country: TypeAlias = Literal['DE', 'CH']
+Country: TypeAlias = Literal['DE', 'CH', 'AT']
 
 
 class DocumentsCoverage(TypedDict):
@@ -197,6 +206,31 @@ class EmployeeYear(TypedDict):
     part_time: NotRequired[int | None]
     total: NotRequired[int | None]
     year: int
+
+
+class FeedCompany(TypedDict):
+    city: NotRequired[str | None]
+    country: Literal['DE', 'CH', 'AT']
+    eu_id: NotRequired[str | None]
+    legal_form: NotRequired[str | None]
+    nace_code: NotRequired[str | None]
+    name: NotRequired[str | None]
+    rechtsform_code: NotRequired[int | None]
+    register_court: NotRequired[str | None]
+    register_id: NotRequired[str | None]
+    register_type: NotRequired[str | None]
+    state: NotRequired[str | None]
+
+
+class FeedInsolvency(TypedDict):
+    category: NotRequired[str | None]
+    court: NotRequired[str | None]
+    publication_ref: NotRequired[str | None]
+    publish_date: NotRequired[str | None]
+
+
+class FeedLinks(TypedDict):
+    company: NotRequired[str | None]
 
 
 class FinancialPublication(TypedDict):
@@ -325,6 +359,26 @@ class InsolvencyBlock(TypedDict):
     self_administration: NotRequired[bool]
 
 
+InsolvencyCategory: TypeAlias = Literal[
+    'Abweisungen mangels Masse',
+    'Aufhebung der Nachlassstundung',
+    'Bestätigung des Nachlassvertrages',
+    'Definitive Nachlassstundung',
+    'Einstellung mangels Aktiven',
+    'Eröffnungen',
+    'Konkurseröffnung',
+    'Konkursverfahren eröffnet',
+    'Nachlassvertrag mit Vermögensabtretung',
+    'Nichteröffnung mangels Vermögens',
+    'Provisorische Nachlassstundung',
+    'Sanierungsverfahren eröffnet',
+    'Schluss des Konkursverfahrens',
+    'Schuldenruf',
+    'Sicherungsmaßnahmen',
+    'Widerruf des Konkurses',
+]
+
+
 class LegalFormEntry(TypedDict):
     entry_date: NotRequired[str | None]
     entry_number: NotRequired[int | None]
@@ -351,7 +405,7 @@ class LegalStatusEvent(TypedDict):
     legal_basis: NotRequired[list[str]]
     object: NotRequired[Literal['legal_status_event']]
     self_administration: NotRequired[bool]
-    sources: NotRequired[list[Literal['si', 'cd', 'portal']]]
+    sources: NotRequired[list[Literal['si', 'cd', 'portal', 'shab', 'firmenbuch']]]
 
 
 class LeiRelative(TypedDict):
@@ -520,6 +574,23 @@ Rechtsform: TypeAlias = Literal[
     'Nichtkaufmännische Prokura (CH)',
     'Gemeinderschaft (CH)',
     'Zweigniederlassung (CH)',
+    'GmbH (AT)',
+    'AG (AT)',
+    'FlexCo (AT)',
+    'KG (AT)',
+    'OG (AT)',
+    'e.U. (AT)',
+    'Genossenschaft (AT)',
+    'Privatstiftung (AT)',
+    'Sparkasse (AT)',
+    'VVaG (AT)',
+    'SE (AT)',
+    'EWIV (AT)',
+    'Sonstiger Rechtsträger (AT)',
+    'OHG (AT, alt)',
+    'KEG (AT, alt)',
+    'OEG (AT, alt)',
+    'Einzelkaufmann (AT, alt)',
 ]
 
 
@@ -578,6 +649,7 @@ RegisterCourt: TypeAlias = Literal[
     'Hamburg',
     'Hamm',
     'Hanau',
+    'Handelsgericht Wien',
     'Hannover',
     'Hildesheim',
     'Hof',
@@ -597,6 +669,21 @@ RegisterCourt: TypeAlias = Literal[
     'Köln',
     'Königstein',
     'Landau',
+    'Landesgericht Eisenstadt',
+    'Landesgericht Feldkirch',
+    'Landesgericht Innsbruck',
+    'Landesgericht Klagenfurt',
+    'Landesgericht Korneuburg',
+    'Landesgericht Krems an der Donau',
+    'Landesgericht Leoben',
+    'Landesgericht Linz',
+    'Landesgericht Ried im Innkreis',
+    'Landesgericht Salzburg',
+    'Landesgericht St. Pölten',
+    'Landesgericht Steyr',
+    'Landesgericht Wels',
+    'Landesgericht Wiener Neustadt',
+    'Landesgericht für Zivilrechtssachen Graz',
     'Landshut',
     'Langenfeld',
     'Lebach',
@@ -662,7 +749,9 @@ RegisterCourt: TypeAlias = Literal[
 ]
 
 
-RegisterType: TypeAlias = Literal['HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR']
+RegisterType: TypeAlias = Literal[
+    'HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR', 'AT-FB'
+]
 
 
 class RelatedCompany(TypedDict):
@@ -687,7 +776,7 @@ class RelationshipsBlock(TypedDict):
 
 class SearchHit(TypedDict):
     address: NotRequired[Address | None]
-    country_code: Literal['DE', 'CH']
+    country_code: Literal['DE', 'CH', 'AT']
     cpv_award_codes: NotRequired[list[str]]
     display_name: str
     employee_count: NotRequired[int | None]
@@ -919,6 +1008,40 @@ class AutocompleteResponse(TypedDict):
     pagination: NotRequired[PaginationInfo]
 
 
+class BalanceSheetPositions(TypedDict):
+    capital_reserves: NotRequired[Money | None]
+    cash: NotRequired[Money | None]
+    current_assets: NotRequired[Money | None]
+    deferred_income: NotRequired[Money | None]
+    deferred_tax_assets: NotRequired[Money | None]
+    deferred_tax_liabilities: NotRequired[Money | None]
+    deficit_not_covered_by_equity: NotRequired[Money | None]
+    equity: NotRequired[Money | None]
+    financial_assets: NotRequired[Money | None]
+    fixed_assets: NotRequired[Money | None]
+    intangible_assets: NotRequired[Money | None]
+    inventories: NotRequired[Money | None]
+    liabilities: NotRequired[Money | None]
+    liabilities_to_affiliates: NotRequired[Money | None]
+    liabilities_to_banks: NotRequired[Money | None]
+    liabilities_to_shareholders: NotRequired[Money | None]
+    object: NotRequired[Literal['balance_sheet_positions']]
+    other_liabilities: NotRequired[Money | None]
+    other_provisions: NotRequired[Money | None]
+    pension_provisions: NotRequired[Money | None]
+    prepaid_expenses: NotRequired[Money | None]
+    provisions: NotRequired[Money | None]
+    receivables: NotRequired[Money | None]
+    revenue_reserves: NotRequired[Money | None]
+    securities: NotRequired[Money | None]
+    subscribed_capital: NotRequired[Money | None]
+    tangible_assets: NotRequired[Money | None]
+    tax_provisions: NotRequired[Money | None]
+    total_assets: NotRequired[Money | None]
+    total_liabilities_and_equity: NotRequired[Money | None]
+    trade_payables: NotRequired[Money | None]
+
+
 class BeneficialOwner(TypedDict):
     effective_share_percent: float
     node_id: str
@@ -1004,7 +1127,7 @@ class CompanyDocumentDownload(TypedDict):
 
 
 class CompanyDocumentList(TypedDict):
-    country_code: Literal['DE', 'CH']
+    country_code: Literal['DE', 'CH', 'AT']
     coverage: DocumentsCoverage
     data: list[CompanyDocumentListItem]
     eu_id: str
@@ -1041,24 +1164,27 @@ class EmployeeHistoryBlock(TypedDict):
     series: NotRequired[list[EmployeeYear]]
 
 
-class FinancialMetric(TypedDict):
-    balance_sheet_total: NotRequired[Money | None]
-    ceiling_basis: NotRequired[str | None]
-    gross_profit: NotRequired[Money | None]
-    liabilities_and_equity_total: NotRequired[Money | None]
-    object: NotRequired[Literal['financial_metric']]
-    other_operating_income: NotRequired[Money | None]
-    profit: NotRequired[Money | None]
-    revenue: NotRequired[Money | None]
-    revenue_ceiling: NotRequired[Money | None]
-    size_basis: NotRequired[str | None]
-    size_class: NotRequired[str | None]
-    year: int
+class FeedEvent(TypedDict):
+    company: FeedCompany
+    discovered_at: str
+    id: str
+    insolvency: NotRequired[FeedInsolvency | None]
+    links: FeedLinks
+    object: NotRequired[Literal['feed_event']]
+    occurred_on: NotRequired[str | None]
+    type: Literal['company.founded', 'company.insolvency_notice']
+
+
+class FeedResponse(TypedDict):
+    data: NotRequired[list[FeedEvent]]
+    has_more: bool
+    next_cursor: str
 
 
 class FinancialSummaryBlock(TypedDict):
     latest_employee_count: NotRequired[int | None]
     latest_employee_count_year: NotRequired[int | None]
+    latest_equity: NotRequired[Money | None]
     latest_fiscal_year: NotRequired[int | None]
     latest_profit: NotRequired[Money | None]
     latest_profit_year: NotRequired[int | None]
@@ -1084,6 +1210,24 @@ class FounderProfileBlock(TypedDict):
     object: NotRequired[Literal['founder_profile']]
     oldest_founder_birth_year: NotRequired[int | None]
     succession_risk: NotRequired[bool | None]
+
+
+class IncomeStatementPositions(TypedDict):
+    cost_of_materials: NotRequired[Money | None]
+    depreciation_and_amortization: NotRequired[Money | None]
+    income_from_investments: NotRequired[Money | None]
+    income_taxes: NotRequired[Money | None]
+    interest_expenses: NotRequired[Money | None]
+    interest_income: NotRequired[Money | None]
+    net_income: NotRequired[Money | None]
+    object: NotRequired[Literal['income_statement_positions']]
+    operating_result: NotRequired[Money | None]
+    other_operating_expenses: NotRequired[Money | None]
+    other_operating_income: NotRequired[Money | None]
+    other_taxes: NotRequired[Money | None]
+    personnel_expenses: NotRequired[Money | None]
+    result_after_taxes: NotRequired[Money | None]
+    revenue: NotRequired[Money | None]
 
 
 class IndustryBlock(TypedDict):
@@ -1242,7 +1386,7 @@ class CompanyDetail(TypedDict):
     business_info: NotRequired[BusinessBlock | None]
     business_purpose: NotRequired[str | None]
     contact: ContactBlock
-    country_code: Literal['DE', 'CH']
+    country_code: Literal['DE', 'CH', 'AT']
     display_name: str
     documents: NotRequired[list[CompanyDocument]]
     elf_code: NotRequired[str | None]
@@ -1294,6 +1438,23 @@ class CompanyHistory(TypedDict):
     object: NotRequired[Literal['company_history']]
     seats: NotRequired[list[SeatEntry]]
     share_capital: NotRequired[list[CapitalEntry]]
+
+
+class FinancialMetric(TypedDict):
+    balance_sheet: NotRequired[BalanceSheetPositions | None]
+    balance_sheet_total: NotRequired[Money | None]
+    ceiling_basis: NotRequired[str | None]
+    gross_profit: NotRequired[Money | None]
+    income_statement: NotRequired[IncomeStatementPositions | None]
+    liabilities_and_equity_total: NotRequired[Money | None]
+    object: NotRequired[Literal['financial_metric']]
+    other_operating_income: NotRequired[Money | None]
+    profit: NotRequired[Money | None]
+    revenue: NotRequired[Money | None]
+    revenue_ceiling: NotRequired[Money | None]
+    size_basis: NotRequired[str | None]
+    size_class: NotRequired[str | None]
+    year: int
 
 
 class FinancialHistoryBlock(TypedDict):

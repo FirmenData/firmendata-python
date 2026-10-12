@@ -38,6 +38,8 @@ PARAMS_OUT = REPO / "src" / "firmendata" / "params.py"
 PARAM_MODELS: dict[tuple[str, str], str] = {
     ("/v1/companies/search", "get"): "SearchFilters",
     ("/v1/subscriptions", "get"): "SubscriptionFilters",
+    ("/v1/feeds/new-companies", "get"): "FeedNewCompaniesFilters",
+    ("/v1/feeds/insolvencies", "get"): "FeedInsolvenciesFilters",
 }
 
 

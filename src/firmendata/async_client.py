@@ -9,14 +9,20 @@ via :mod:`firmendata._retry`.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Unpack
+from typing import Any, Literal, Unpack
 
 import httpx
 
 from ._base import DEFAULT_BASE_URL, DEFAULT_TIMEOUT, _BaseClient, _segment
+from ._feeds import AsyncFeedIterator
 from ._retry import DEFAULT_MAX_RETRIES, backoff_seconds, should_retry
 from .errors import APIConnectionError, APITimeoutError, RateLimitError
-from .params import SearchFilters, SubscriptionFilters
+from .params import (
+    FeedInsolvenciesFilters,
+    FeedNewCompaniesFilters,
+    SearchFilters,
+    SubscriptionFilters,
+)
 from .types import (
     AutocompleteResponse,
     CompanyDetail,
@@ -24,6 +30,7 @@ from .types import (
     CompanyDocumentList,
     CompanyFinancials,
     CompanyHistory,
+    FeedResponse,
     SearchResponse,
     ShareholdersReport,
     Subscription,
@@ -132,11 +139,14 @@ class AsyncFirmenData(_BaseClient):
 
     async def autocomplete(
             self, q: str, *, limit: int = 10, fetch_realtime: bool = False,
+            country: Literal["DE", "CH", "AT"] | None = None,
     ) -> AutocompleteResponse:
         """Free, keyless company-name suggestions. See the sync client."""
         return await self._request(
             "GET", "/v1/companies/autocomplete",
-            params={"q": q, "limit": limit, "fetch_realtime": fetch_realtime},
+            params={
+                "q": q, "limit": limit, "fetch_realtime": fetch_realtime, "country": country,
+            },
         )
 
     async def search(self, **filters: Unpack[SearchFilters]) -> SearchResponse:
@@ -205,6 +215,35 @@ class AsyncFirmenData(_BaseClient):
                 "fetch_realtime": fetch_realtime,
             },
         )
+
+    # -- event feeds (Beta) ------------------------------------------------
+
+    async def feed_new_companies(
+            self, **filters: Unpack[FeedNewCompaniesFilters],
+    ) -> FeedResponse:
+        """One page of new-company events (Beta). See the sync client."""
+        return await self._request("GET", "/v1/feeds/new-companies", params=dict(filters))
+
+    async def feed_insolvencies(
+            self, **filters: Unpack[FeedInsolvenciesFilters],
+    ) -> FeedResponse:
+        """One page of insolvency notices (Beta). See the sync client."""
+        return await self._request("GET", "/v1/feeds/insolvencies", params=dict(filters))
+
+    def iter_feed_new_companies(
+            self, **filters: Unpack[FeedNewCompaniesFilters],
+    ) -> AsyncFeedIterator:
+        """Use ``async for`` to drain events, then persist the iterator's ``next_cursor``.
+
+        See the sync client for checkpoint and deduplication semantics.
+        """
+        return AsyncFeedIterator(lambda params: self.feed_new_companies(**params), dict(filters))
+
+    def iter_feed_insolvencies(
+            self, **filters: Unpack[FeedInsolvenciesFilters],
+    ) -> AsyncFeedIterator:
+        """Async iteration over insolvency notices. See :meth:`iter_feed_new_companies`."""
+        return AsyncFeedIterator(lambda params: self.feed_insolvencies(**params), dict(filters))
 
     # -- subscriptions -----------------------------------------------------
 
