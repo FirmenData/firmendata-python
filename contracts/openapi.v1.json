@@ -11344,6 +11344,27 @@
             }
           },
           {
+            "description": "Company register court, not the insolvency court. German Registergericht or Austrian Firmenbuch court; repeated values are matched with OR. Select Swiss companies with canton, since their register office is cantonal.",
+            "in": "query",
+            "name": "register_court",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RegisterCourt"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Company register court, not the insolvency court. German Registergericht or Austrian Firmenbuch court; repeated values are matched with OR. Select Swiss companies with canton, since their register office is cantonal.",
+              "title": "Register Court"
+            }
+          },
+          {
             "description": "Company industry category; repeated values are matched with OR.",
             "in": "query",
             "name": "industry_slug",
@@ -11710,6 +11731,27 @@
               ],
               "description": "Swiss company canton; repeated values are matched with OR.",
               "title": "Canton"
+            }
+          },
+          {
+            "description": "German Registergericht or Austrian Firmenbuch court; repeated values are matched with OR. Select Swiss companies with canton, since their register office is cantonal.",
+            "in": "query",
+            "name": "register_court",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RegisterCourt"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "German Registergericht or Austrian Firmenbuch court; repeated values are matched with OR. Select Swiss companies with canton, since their register office is cantonal.",
+              "title": "Register Court"
             }
           },
           {

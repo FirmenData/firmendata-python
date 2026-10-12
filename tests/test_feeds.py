@@ -101,6 +101,7 @@ async def test_feed_query_encoding(make_client, method, path, event_type):
         "limit": 100,
         "country": "CH",
         "canton": ["ZH", "BE"],
+        "register_court": ["München", "Berlin (Charlottenburg)", "Handelsgericht Wien"],
         "industry_slug": ["technology", "manufacturing"],
         "rechtsform": ["AG (CH)", "GmbH (CH)"],
     }

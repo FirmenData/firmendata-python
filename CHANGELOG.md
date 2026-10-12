@@ -11,6 +11,9 @@ Regenerated from the updated API contract. **Additive, non-breaking:**
   while `has_more` is true, deduplicate event IDs within each run, and expose
   `.next_cursor` after fully consumed pages for resuming, including empty pages.
   Async variants use `async for`.
+- Both feeds accept `register_court` (German Registergericht or Austrian
+  Firmenbuch court names, repeated values combined with OR); on the insolvency
+  feed it filters by the company's register court, not the insolvency court.
 - Generated types reflect Austrian countries, register types, courts, states
   and legal forms, plus balance-sheet and income-statement positions and
   latest equity in financial responses.

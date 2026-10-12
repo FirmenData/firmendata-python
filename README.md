@@ -240,8 +240,11 @@ seven days expire; restart with a recent `since`. Each page with events costs
 settlement delay.
 
 Both feeds accept `country` (`DE`, `CH` or `AT`), `bundesland`, `canton`,
-`industry_slug` and `rechtsform`. List filters repeat query keys and match
-with OR. Insolvencies default to `country="DE"` and also accept `category`,
+`register_court`, `industry_slug` and `rechtsform`. List filters repeat query
+keys and match with OR. `register_court` takes German Registergericht or
+Austrian Firmenbuch court names (the same values as search); select Swiss
+companies with `canton`. On the insolvency feed it is the company's register
+court, not the insolvency court. Insolvencies default to `country="DE"` and also accept `category`,
 `revenue_min` (inclusive) and `revenue_max` (exclusive). Swiss new-company
 events come from the SHAB new-company scanner; Swiss Schuldenruf notices
 require an explicit category selection:
