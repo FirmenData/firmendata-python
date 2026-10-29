@@ -404,6 +404,21 @@
             "description": "Register type code (e.g. `HRB`, `HRA`, `GnR`, `PR`, `VR`, `CH-HR`, `AT-FB`).",
             "title": "Register Type"
           },
+          "registered_seat": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Registered seat as filed (German, may include district).",
+            "examples": [
+              "München"
+            ],
+            "title": "Registered Seat"
+          },
           "uid": {
             "anyOf": [
               {
@@ -2631,6 +2646,26 @@
             "title": "Object",
             "type": "string"
           },
+          "phones": {
+            "description": "Company phone and fax numbers.",
+            "items": {
+              "$ref": "#/components/schemas/Phone"
+            },
+            "title": "Phones",
+            "type": "array"
+          },
+          "primary_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Primary business contact email address.",
+            "title": "Primary Email"
+          },
           "social_profiles": {
             "description": "Discovered social-media profiles.",
             "items": {
@@ -4365,6 +4400,7 @@
           "manufacturing",
           "media",
           "mining",
+          "other_services",
           "public_sector",
           "technology",
           "telecom",
@@ -5507,6 +5543,50 @@
           "full_name"
         ],
         "title": "Person",
+        "type": "object"
+      },
+      "Phone": {
+        "description": "A company phone or fax number.",
+        "properties": {
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Number formatted for display.",
+            "title": "Display"
+          },
+          "kind": {
+            "description": "Whether the number is a phone or fax.",
+            "enum": [
+              "phone",
+              "fax"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "number": {
+            "description": "Phone or fax number in E.164 format.",
+            "title": "Number",
+            "type": "string"
+          },
+          "object": {
+            "const": "phone",
+            "default": "phone",
+            "description": "Discriminator. Always `phone`.",
+            "title": "Object",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "kind"
+        ],
+        "title": "Phone",
         "type": "object"
       },
       "PotentialBeneficialOwner": {
@@ -8424,7 +8504,7 @@
       "email": "info@firmendata.com",
       "name": "firmendata Support"
     },
-    "description": "Programmatic access to German, Swiss and Austrian company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). For company endpoints,\n   this only affects German (DE) companies; Swiss (CH) and Austrian (AT)\n   companies ignore the flag and incur no realtime surcharge. On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions (German companies only).** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. Search and list cursors are not\nguaranteed to survive a deploy. Feed cursors under `/v1/feeds` persist\nacross deploys and restarts: keep `next_cursor` even after an empty page.\nFeed positions expire after seven days; restart with `since` if expired.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
+    "description": "Programmatic access to German, Swiss and Austrian company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the German registries. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice from the German registries inline before\n   responding. Costs more credits and adds upstream latency\n   (typically several seconds, sometimes longer). For company endpoints,\n   this only affects German (DE) companies; Swiss (CH) and Austrian (AT)\n   companies ignore the flag and incur no realtime surcharge. On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   live German registers and companies not yet indexed by firmendata\n   are added, appearing in the same response. For newly discovered\n   companies the register documents and financial publications are then\n   fetched in the background at no extra cost, so their full profile is\n   available shortly after.\n\n3. **Subscriptions (German companies only).** The only mode that *guarantees* you eventually\n   see fresh data: the dispatcher retries failed scrapes on the\n   configured cadence and pushes a webhook (or queues an event) when\n   something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. A search cursor also remembers the\nfilters of the request that issued it, so the next page needs only\n`cursor`; repeating the same filters is fine, changing them is a `422`.\nSearch and list cursors are not\nguaranteed to survive a deploy. Feed cursors under `/v1/feeds` persist\nacross deploys and restarts: keep `next_cursor` even after an empty page.\nFeed positions expire after seven days; restart with `since` if expired.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. The dispatcher records each detected\n  change as a `subscription_event`, and you retrieve the rendered payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
     "license": {
       "name": "Commercial",
       "url": "https://firmendata.com/en/terms-and-conditions"
@@ -8749,21 +8829,21 @@
             }
           },
           {
-            "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`.",
+            "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`. The cursor remembers the filters of the request that issued it: send it alone (with `limit` if you like), or with the same filters — a cursor sent with different filters is rejected with `422`.",
             "in": "query",
             "name": "cursor",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "maxLength": 256,
+                  "maxLength": 4096,
                   "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`.",
+              "description": "Opaque pagination cursor. Pass the `pagination.next_cursor` (or `previous_cursor`) from a previous response unchanged; a cursor that was not issued by this endpoint is rejected with `422`. The cursor remembers the filters of the request that issued it: send it alone (with `limit` if you like), or with the same filters — a cursor sent with different filters is rejected with `422`.",
               "title": "Cursor"
             }
           },
@@ -9409,7 +9489,7 @@
             }
           },
           {
-            "description": "Exact USt-IdNr (German / EU VAT number) as published on the company's Impressum. Case-insensitive.",
+            "description": "Exact VAT number from the company's Impressum or EU public-procurement (TED) notices. German USt-IdNr and Austrian UIDs (ATU…) are accepted. Case-insensitive.",
             "in": "query",
             "name": "ust_idnr",
             "required": false,
@@ -9424,7 +9504,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Exact USt-IdNr (German / EU VAT number) as published on the company's Impressum. Case-insensitive.",
+              "description": "Exact VAT number from the company's Impressum or EU public-procurement (TED) notices. German USt-IdNr and Austrian UIDs (ATU…) are accepted. Case-insensitive.",
               "examples": [
                 "DE123456789"
               ],
@@ -9722,7 +9802,7 @@
     },
     "/v1/companies/{eu_id}": {
       "get": {
-        "description": "Everything you need to render a company landing page in a single call.\n\n- **Identity & registration** — names, legal form, register entry, founding dates, registered address\n- **Financial headline** — latest-year revenue, profit, assets, liabilities, equity, employee count\n- **Business & industry** — trade description, products, primary WZ 2025 code with the full category tree\n- **Management** — register entry members (managing directors, authorised signatories, supervisory board)\n- **Ownership (LEI graph)** — direct parent and the first 25 direct subsidiaries via GLEIF, with the total count\n- **Contact & web presence** — primary domain, Impressum URL, primary email, and discovered social profiles\n- **Insolvency** — current status, court, case number, dissolution flag, most recent event date\n- **AI insights** — company summary, outlook, and risk + opportunity keywords in German and English\n- **Documents** — downloadable register documents available for the company (Aktueller Abdruck, Chronologischer Abdruck, Liste der Gesellschafter, Articles of Association — Gesellschaftsvertrag / Satzung / Statut depending on legal form, Anmeldung, Musterprotokoll); fetch a presigned URL via `/companies/{eu_id}/documents/download`; `is_outdated` flags a register extract older than the latest register entry\n\nFor multi-year history, employee time series, relationships, and Bilanz publications, call `/companies/{eu_id}/financials`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
+        "description": "Everything you need to render a company landing page in a single call.\n\n- **Identity & registration** — names, legal form, register entry, founding dates, registered address\n- **Financial headline** — latest-year revenue, profit, assets, liabilities, equity, employee count\n- **Business & industry** — trade description, products, primary WZ 2025 code with the full category tree\n- **Management** — register entry members (managing directors, authorised signatories, supervisory board)\n- **Ownership (LEI graph)** — direct parent and the first 25 direct subsidiaries via GLEIF, with the total count\n- **Contact & web presence** — primary domain, Impressum URL, primary email, phone and fax numbers, and discovered social profiles\n- **Insolvency** — current status, court, case number, dissolution flag, most recent event date\n- **AI insights** — company summary, outlook, and risk + opportunity keywords in German and English\n- **Documents** — downloadable register documents available for the company (Aktueller Abdruck, Chronologischer Abdruck, Liste der Gesellschafter, Articles of Association — Gesellschaftsvertrag / Satzung / Statut depending on legal form, Anmeldung, Musterprotokoll); fetch a presigned URL via `/companies/{eu_id}/documents/download`; `is_outdated` flags a register extract older than the latest register entry\n\nFor multi-year history, employee time series, relationships, and Bilanz publications, call `/companies/{eu_id}/financials`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
         "operationId": "getCompanyDetail",
         "parameters": [
           {

@@ -44,6 +44,7 @@ class AutocompleteHit(TypedDict):
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
+    registered_seat: NotRequired[str | None]
     uid: NotRequired[str | None]
 
 
@@ -330,6 +331,7 @@ IndustrySlug: TypeAlias = Literal[
     'manufacturing',
     'media',
     'mining',
+    'other_services',
     'public_sector',
     'technology',
     'telecom',
@@ -490,6 +492,13 @@ class Person(TypedDict):
     middle_name: NotRequired[str | None]
     object: NotRequired[Literal['person']]
     title: NotRequired[str | None]
+
+
+class Phone(TypedDict):
+    display: NotRequired[str | None]
+    kind: Literal['phone', 'fax']
+    number: str
+    object: NotRequired[Literal['phone']]
 
 
 class PotentialBeneficialOwner(TypedDict):
@@ -1154,6 +1163,8 @@ class CompanyListsResponse(TypedDict):
 class ContactBlock(TypedDict):
     impressum_url: NotRequired[str | None]
     object: NotRequired[Literal['company_contact']]
+    phones: NotRequired[list[Phone]]
+    primary_email: NotRequired[str | None]
     social_profiles: NotRequired[list[SocialProfile]]
     website: NotRequired[str | None]
     websites: NotRequired[list[WebsiteEntry]]
