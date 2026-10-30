@@ -7,6 +7,7 @@ Every non-2xx response carries a JSON body shaped like::
       "title":  "Insufficient credits.",
       "status": 402,
       "detail": "Your credit balance is too low for this request.",
+      "message": "Your credit balance is too low for this request.",
       "instance": "/v1/companies/DE.../ubo",
       "request_id": "8e510d86-..."
     }
@@ -113,9 +114,11 @@ class ValidationError(APIError):
 class RateLimitError(APIError):
     """Rate limit exceeded.
 
-    ``retry_after`` is the server's ``Retry-After`` in seconds when present.
-    The client retries these automatically unless ``max_retries=0``; seeing
-    one means the retry budget was exhausted.
+    ``retry_after`` is the server's ``Retry-After`` in seconds when present —
+    wait that long. The client retries these automatically unless
+    ``max_retries=0``; seeing one means the retry budget was exhausted, or the
+    server asked for a longer wait than the client blocks for (20 seconds) —
+    the keyless daily limit, for example — and it was raised at once.
     """
 
     def __init__(self, *args: Any, retry_after: float | None = None, **kwargs: Any) -> None:
@@ -180,7 +183,8 @@ def build_error(
 
     detail = problem.get("detail")
     title = problem.get("title")
-    message = detail or title or f"HTTP {status_code}"
+    # ``message`` repeats ``detail`` (or ``title``) for clients that read that name.
+    message = detail or problem.get("message") or title or f"HTTP {status_code}"
 
     kwargs: dict[str, Any] = dict(
         status_code=status_code,

@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,6 +50,8 @@ jobs:
   # Advisory: tells us when the live API has moved past our vendored copy.
   # Never blocks — the SDK targets the spec it ships with, and a drifting
   # upstream is a signal to cut a release, not a reason to fail this build.
+  # Compares the whole document (paths, schemas, descriptions), ignoring only
+  # `servers`.
   upstream-drift:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -58,17 +60,43 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compare vendored spec against production
         run: |
-          curl -sSL https://api.firmendata.com/v1/openapi.json -o /tmp/live.json
+          curl -fsSL https://api.firmendata.com/v1/openapi.json -o /tmp/live.json
           python - <<'PY'
           import json
-          live = json.load(open('/tmp/live.json'))
-          vendored = json.load(open('contracts/openapi.v1.json'))
-          lp, vp = set(live['paths']), set(vendored['paths'])
-          if lp != vp:
-              print(f"::warning::Vendored spec is out of date. "
-                    f"added={sorted(lp - vp)} removed={sorted(vp - lp)}")
+
+          def load(path):
+              spec = json.load(open(path))
+              spec.pop("servers", None)
+              return spec
+
+          def diff(a, b):
+              a, b = a or {}, b or {}
+              return {
+                  "added": sorted(set(a) - set(b)),
+                  "removed": sorted(set(b) - set(a)),
+                  "changed": sorted(k for k in set(a) & set(b) if a[k] != b[k]),
+              }
+
+          live = load("/tmp/live.json")
+          vendored = load("contracts/openapi.v1.json")
+          if live == vendored:
+              print("Vendored spec matches production (ignoring servers).")
           else:
-              print("Vendored spec matches production paths.")
+              summary = {
+                  "version": {
+                      "live": live.get("info", {}).get("version"),
+                      "vendored": vendored.get("info", {}).get("version"),
+                  },
+                  "sections": sorted(
+                      k for k in set(live) | set(vendored) if live.get(k) != vendored.get(k)
+                  ),
+                  "paths": diff(live.get("paths"), vendored.get("paths")),
+                  "schemas": diff(
+                      live.get("components", {}).get("schemas"),
+                      vendored.get("components", {}).get("schemas"),
+                  ),
+              }
+              print(f"::warning::Vendored spec is out of date. {json.dumps(summary)}")
           PY
 
   secrets:

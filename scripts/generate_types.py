@@ -40,6 +40,7 @@ PARAM_MODELS: dict[tuple[str, str], str] = {
     ("/v1/subscriptions", "get"): "SubscriptionFilters",
     ("/v1/feeds/new-companies", "get"): "FeedNewCompaniesFilters",
     ("/v1/feeds/insolvencies", "get"): "FeedInsolvenciesFilters",
+    ("/v1/lists/{list_id}", "get"): "CompanyListFilters",
 }
 
 
@@ -148,8 +149,8 @@ def main() -> int:
     if result.returncode != 0:
         sys.stderr.write(result.stderr)
         print(
-            "\ndatamodel-code-generator failed. Install it with "
-            "`pip install 'datamodel-code-generator[http]'`.",
+            "\ndatamodel-code-generator failed. Install the pinned toolchain with "
+            "`pip install -e '.[dev]'`.",
             file=sys.stderr,
         )
         return result.returncode
