@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, NotRequired, TypedDict
 
-__all__ = ['SearchFilters', 'SubscriptionFilters', 'FeedNewCompaniesFilters', 'FeedInsolvenciesFilters']
+__all__ = ['SearchFilters', 'SubscriptionFilters', 'FeedNewCompaniesFilters', 'FeedInsolvenciesFilters', 'CompanyListFilters']
 
 
 class SearchFilters(TypedDict, total=False):
@@ -12,7 +12,7 @@ class SearchFilters(TypedDict, total=False):
 
     # Unified keyword, tried as an eu_id, then a company-name prefix, then a person name —...
     q: NotRequired[str]
-    # Company name prefix, matched against the folded legal name with quotes and invisible...
+    # Company name prefix, ignoring case, accents, quotes and invisible characters — `Mülle...
     company_name: NotRequired[str]
     # Exact eu_id lookup (no prefix expansion).
     eu_id: NotRequired[str]
@@ -72,7 +72,7 @@ class SearchFilters(TypedDict, total=False):
     avg_birth_year_min: NotRequired[int]
     # Maximum average birth year across the company's associated persons.
     avg_birth_year_max: NotRequired[int]
-    # Company lifecycle status, resolved from the merged Handelsregister (SI + CD) and Inso...
+    # Company lifecycle status according to the commercial register and insolvency notices,...
     legal_status: NotRequired[list[Literal['active', 'in_liquidation', 'insolvent', 'dissolved', 'deleted']]]
     # Statutory size class under § 267 / § 267a HGB. Multi-valued. - `kleinst` — Kleinstkap...
     company_size: NotRequired[list[Literal['kleinst', 'klein', 'mittelgross']]]
@@ -162,3 +162,15 @@ class FeedInsolvenciesFilters(TypedDict, total=False):
     revenue_min: NotRequired[float]
     # Exclusive upper bound on the company's latest known revenue in euros.
     revenue_max: NotRequired[float]
+
+class CompanyListFilters(TypedDict, total=False):
+    """Companies on a list."""
+
+    # Companies per page.
+    limit: NotRequired[int]
+    # Opaque pagination cursor. Pass the `pagination.next_cursor` from a previous response...
+    cursor: NotRequired[str]
+    # Order the list by a company attribute instead of by when companies were added. Same v...
+    sort: NotRequired[Literal['name', 'revenue', 'profit', 'total_assets', 'employee_count']]
+    # Sort direction; applies only with `sort`.
+    sort_direction: NotRequired[Literal['asc', 'desc']]

@@ -520,6 +520,7 @@ class Problem(TypedDict):
     detail: NotRequired[str]
     errors: NotRequired[list[Error]]
     instance: NotRequired[str]
+    message: str
     request_id: str
     status: int
     title: str

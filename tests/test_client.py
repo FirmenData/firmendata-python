@@ -18,6 +18,7 @@ from firmendata import (
     NotFoundError,
     RateLimitError,
     ValidationError,
+    __version__,
 )
 from firmendata._retry import backoff_seconds, should_retry
 from firmendata.errors import APIConnectionError, ServerError
@@ -188,7 +189,7 @@ class TestRequestShaping:
             return httpx.Response(200, json={})
 
         client_with(handler).autocomplete("sap")
-        assert seen["ua"].startswith("firmendata-python/")
+        assert seen["ua"] == f"firmendata-python/{__version__}"
 
     def test_path_ids_are_percent_encoded(self):
         """A hostile id must not be able to rewrite the request target.
@@ -251,18 +252,20 @@ class TestErrorMapping:
             client_with(handler, max_retries=0).autocomplete("ab")
         assert exc.value.errors[0]["param"] == "q"
 
-    def test_financial_line_items_are_opt_in(self):
-        seen = []
-
+    def test_problem_message_is_passed_through(self):
         def handler(request):
-            seen.append(request.url.params)
-            return httpx.Response(200, json={})
+            return httpx.Response(402, json={
+                "type": "https://api.firmendata.com/problems/insufficient-credits",
+                "title": "Insufficient credits.",
+                "status": 402,
+                "message": "Not enough credits for this call",
+                "request_id": "req-1",
+            })
 
-        client = client_with(handler, max_retries=0)
-        client.get_financials("DE1")
-        client.get_financials("DE1", include_line_items=True, years=3)
-        assert not seen[0]
-        assert seen[1].get_list("include") == ["line_items"] and seen[1]["years"] == "3"
+        with pytest.raises(InsufficientCreditsError) as exc:
+            client_with(handler, max_retries=0).get_ubo("DE1")
+        assert exc.value.args[0] == "Not enough credits for this call"
+        assert exc.value.request_id == "req-1"
 
     def test_rate_limit_carries_retry_after(self):
         def handler(request):

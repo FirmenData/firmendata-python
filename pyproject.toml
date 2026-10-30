@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "firmendata"
 dynamic = ["version"]
-description = "Official Python client for the firmendata German company-data API"
+description = "Official Python client for the firmendata API: German, Swiss and Austrian company data"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "FirmenData", email = "info@firmendata.com" }]
 keywords = [
-    "firmendata", "germany", "company-data", "handelsregister",
-    "unternehmensregister", "company-register", "kyc", "ubo", "api-client",
+    "firmendata", "germany", "switzerland", "austria", "company-data", "handelsregister",
+    "unternehmensregister", "firmenbuch", "company-register", "kyc", "ubo", "api-client",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -39,7 +39,12 @@ dev = [
     "respx>=0.21",
     "mypy>=1.11",
     "ruff>=0.6",
-    "datamodel-code-generator>=0.25",
+    # The type generator is pinned exactly: its output (and black's formatting
+    # of it) changes between releases, and CI fails when regenerating
+    # src/firmendata/types.py produces any diff. Bump both together, regenerate,
+    # and commit the result.
+    "datamodel-code-generator==0.87.0",
+    "black==26.10.1",
 ]
 
 [project.urls]
