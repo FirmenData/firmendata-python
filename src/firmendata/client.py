@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Any, Literal, Unpack
 
 import httpx
@@ -38,6 +38,7 @@ from .types import (
     CompanyHistory,
     CompanyListDetailResponse,
     CompanyListsResponse,
+    Country,
     FeedResponse,
     SearchHit,
     SearchResponse,
@@ -181,7 +182,7 @@ class FirmenData(_BaseClient):
             *,
             limit: int = 10,
             fetch_realtime: bool = False,
-            country: Literal["DE", "CH", "AT"] | None = None,
+            country: Country | None = None,
             timeout: float | None = None,
     ) -> AutocompleteResponse:
         """Company-name suggestions for a search box.
@@ -259,7 +260,12 @@ class FirmenData(_BaseClient):
     def get_company(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> CompanyDetail:
-        """Full profile for one company."""
+        """Full profile for one company.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -272,6 +278,8 @@ class FirmenData(_BaseClient):
             details: bool | None = None,
             include_line_items: bool | None = None,
             years: int | None = None,
+            scope: Sequence[Literal["entity", "group"]] | None = None,
+            year: int | None = None,
     ) -> CompanyFinancials:
         """Multi-year financial statements.
 
@@ -287,16 +295,28 @@ class FirmenData(_BaseClient):
         ``include_line_items`` is deprecated (it emits a
         :class:`DeprecationWarning`) and is sent as ``details``; an explicit
         ``details`` wins.
+
+        ``scope`` selects full entity/group histories in ``history.by_scope`` (default both).
+        ``year`` selects one fiscal year (1900–2100); combining it with ``years`` returns 422.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
         """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/financials",
-            params=_financial_params(details, include_line_items, years),
+            params=_financial_params(details, include_line_items, years, scope, year),
         )
 
     def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> ShareholdersReport:
-        """Cap table from the most recent Gesellschafterliste (GmbH/UG)."""
+        """Cap table from the most recent Gesellschafterliste (GmbH/UG).
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/shareholders",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -305,7 +325,12 @@ class FirmenData(_BaseClient):
     def get_ubo(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> UboReport:
-        """Ultimate beneficial owners, resolved through ownership chains."""
+        """Ultimate beneficial owners, resolved through ownership chains.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/ubo",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -314,7 +339,12 @@ class FirmenData(_BaseClient):
     def get_history(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> CompanyHistory:
-        """Chronological register history."""
+        """Chronological register history.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/history",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -326,6 +356,10 @@ class FirmenData(_BaseClient):
         """Check the registry live and list documents, including older versions.
 
         A live, billed call: never retried once it may have reached the server.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
         """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/documents", live=True, timeout=timeout,
@@ -349,6 +383,10 @@ class FirmenData(_BaseClient):
 
         A live, billed call: never retried once it may have reached the
         server, with a timeout of at least 150 s unless ``timeout`` is set.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
         """
         return self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/documents/download",
@@ -428,7 +466,12 @@ class FirmenData(_BaseClient):
     # -- subscriptions -----------------------------------------------------
 
     def list_subscriptions(self, **filters: Unpack[SubscriptionFilters]) -> SubscriptionList:
-        """List change subscriptions."""
+        """List change subscriptions.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return self._request("GET", "/v1/subscriptions", params=dict(filters))
 
     def create_subscription(
@@ -438,6 +481,10 @@ class FirmenData(_BaseClient):
 
         Not retried on 5xx: a create that times out may already have been
         applied, and a blind replay would produce a duplicate.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
         """
         return self._request("POST", "/v1/subscriptions", json=dict(body))
 

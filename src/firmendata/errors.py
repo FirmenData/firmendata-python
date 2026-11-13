@@ -26,6 +26,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from .types import Candidate as CompanyIdCandidate
+
 __all__ = [
     "FirmenDataError",
     "APIError",
@@ -34,6 +36,8 @@ __all__ = [
     "InsufficientCreditsError",
     "NotFoundError",
     "ConflictError",
+    "AmbiguousCompanyIdError",
+    "CompanyIdCandidate",
     "ValidationError",
     "RateLimitError",
     "ServerError",
@@ -107,6 +111,16 @@ class ConflictError(APIError):
     """The request conflicts with existing state (e.g. duplicate subscription)."""
 
 
+class AmbiguousCompanyIdError(ConflictError):
+    """An incomplete German company id matches several companies; see ``.candidates``."""
+
+    def __init__(
+            self, *args: Any, candidates: list[CompanyIdCandidate] | None = None, **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.candidates: list[CompanyIdCandidate] = list(candidates or [])
+
+
 class ValidationError(APIError):
     """Request parameters failed validation. See ``.errors`` for the fields."""
 
@@ -138,6 +152,7 @@ _BY_SLUG: dict[str, type[APIError]] = {
     "insufficient-credits": InsufficientCreditsError,
     "not-found": NotFoundError,
     "conflict": ConflictError,
+    "ambiguous-company-id": AmbiguousCompanyIdError,
     "validation-error": ValidationError,
     "rate-limit-exceeded": RateLimitError,
 }
@@ -198,4 +213,6 @@ def build_error(
     )
     if cls is RateLimitError:
         kwargs["retry_after"] = _retry_after_seconds(headers)
+    if cls is AmbiguousCompanyIdError:
+        kwargs["candidates"] = problem.get("candidates")
     return cls(message, **kwargs)

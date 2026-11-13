@@ -35,7 +35,7 @@ class ArticlesEntry(TypedDict):
 
 
 class AutocompleteHit(TypedDict):
-    country_code: Literal['DE', 'CH', 'AT']
+    country_code: Literal['DE', 'CH', 'AT', 'GB']
     display_name: str
     eu_id: str
     legal_name: str
@@ -135,6 +135,20 @@ Canton: TypeAlias = Literal[
 ]
 
 
+class ClassificationCode(TypedDict):
+    code: str
+    object: NotRequired[Literal['classification_code']]
+    title_de: NotRequired[str | None]
+    title_en: NotRequired[str | None]
+
+
+class ClassificationRepresentation(TypedDict):
+    codes: NotRequired[list[ClassificationCode]]
+    object: NotRequired[Literal['classification_representation']]
+    partial: bool
+    scheme: Literal['nace_rev_2_1', 'wz_2008', 'nace_rev_2', 'isic_rev_4']
+
+
 class CompanyDocument(TypedDict):
     file_id: str
     file_name_de: str
@@ -192,10 +206,11 @@ class CompanyListSummary(TypedDict):
 CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
-Country: TypeAlias = Literal['DE', 'CH', 'AT']
+Country: TypeAlias = Literal['DE', 'CH', 'AT', 'GB']
 
 
 class DocumentsCoverage(TypedDict):
+    external_url: NotRequired[str | None]
     object: NotRequired[Literal['documents_coverage']]
     reason: NotRequired[str | None]
     status: Literal['available', 'not_applicable']
@@ -209,9 +224,15 @@ class EmployeeYear(TypedDict):
     year: int
 
 
+class EuSmeDeclaration(TypedDict):
+    declared_on: str
+    is_sme: bool
+    object: NotRequired[Literal['eu_sme_declaration']]
+
+
 class FeedCompany(TypedDict):
     city: NotRequired[str | None]
-    country: Literal['DE', 'CH', 'AT']
+    country: Literal['DE', 'CH', 'AT', 'GB']
     eu_id: NotRequired[str | None]
     legal_form: NotRequired[str | None]
     nace_code: NotRequired[str | None]
@@ -254,6 +275,7 @@ class FinancialRow(TypedDict):
     previous_value: NotRequired[float | None]
     report_type: str
     section: NotRequired[str | None]
+    statement_scope: NotRequired[Literal['entity', 'group'] | None]
     subsection: NotRequired[str | None]
     subsubsection: NotRequired[str | None]
     subsubsubsection: NotRequired[str | None]
@@ -407,7 +429,9 @@ class LegalStatusEvent(TypedDict):
     legal_basis: NotRequired[list[str]]
     object: NotRequired[Literal['legal_status_event']]
     self_administration: NotRequired[bool]
-    sources: NotRequired[list[Literal['si', 'cd', 'portal', 'shab', 'firmenbuch']]]
+    sources: NotRequired[
+        list[Literal['si', 'cd', 'portal', 'shab', 'firmenbuch', 'companies_house']]
+    ]
 
 
 class LeiRelative(TypedDict):
@@ -511,12 +535,30 @@ class PotentialBeneficialOwner(TypedDict):
     ]
 
 
+class PreviousRegistration(TypedDict):
+    eu_id: NotRequired[str | None]
+    kind: Literal['seat_move', 'court_change']
+    original_first_register_entry_at: NotRequired[str | None]
+    register_court: NotRequired[str | None]
+    register_number: NotRequired[int | None]
+    register_type: NotRequired[str | None]
+    registered_seat: NotRequired[str | None]
+    resolution_date: NotRequired[str | None]
+
+
+class Candidate(TypedDict):
+    eu_id: str
+    is_deleted: bool
+    name: str
+
+
 class Error(TypedDict):
     message: str
     param: str
 
 
 class Problem(TypedDict):
+    candidates: NotRequired[list[Candidate]]
     detail: NotRequired[str]
     errors: NotRequired[list[Error]]
     instance: NotRequired[str]
@@ -601,6 +643,44 @@ Rechtsform: TypeAlias = Literal[
     'KEG (AT, alt)',
     'OEG (AT, alt)',
     'Einzelkaufmann (AT, alt)',
+    'Zweigniederlassung ausl. Ges. (AT)',
+    'Ltd (UK)',
+    'PLC (UK)',
+    'LLP (UK)',
+    'LP (UK)',
+    'Scottish partnership (UK)',
+    'CIC (UK)',
+    'Ltd by guarantee (UK)',
+    'Ltd by guarantee, name exempt (UK)',
+    'Ltd, name exempt (UK)',
+    'Unlimited company (UK)',
+    'Unlimited, no share capital (UK)',
+    'Old public company (UK)',
+    'CIO (UK)',
+    'SCIO (UK)',
+    'Registered society (UK)',
+    'Industrial and provident society (UK)',
+    'Royal charter company (UK)',
+    'ICVC (UK)',
+    'ICVC, securities (UK)',
+    'ICVC, warrant (UK)',
+    'ICVC, umbrella (UK)',
+    'United Kingdom Societas (UK)',
+    'SE (UK)',
+    'EEIG (UK)',
+    'EEIG establishment (UK)',
+    'UKEIG (UK)',
+    'Overseas entity (UK)',
+    'Overseas company (UK)',
+    'UK establishment (UK)',
+    'Northern Ireland company (UK)',
+    'Credit union, Northern Ireland (UK)',
+    'Protected cell company (UK)',
+    'Assurance company (UK)',
+    'Unregistered company (UK)',
+    'FE or sixth form college (UK)',
+    'Converted or closed (UK)',
+    'Other company type (UK)',
 ]
 
 
@@ -760,7 +840,7 @@ RegisterCourt: TypeAlias = Literal[
 
 
 RegisterType: TypeAlias = Literal[
-    'HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR', 'AT-FB'
+    'HRA', 'HRB', 'GnR', 'PR', 'VR', 'GsR', 'CH-HR', 'AT-FB', 'GB-CR'
 ]
 
 
@@ -786,7 +866,7 @@ class RelationshipsBlock(TypedDict):
 
 class SearchHit(TypedDict):
     address: NotRequired[Address | None]
-    country_code: Literal['DE', 'CH', 'AT']
+    country_code: Literal['DE', 'CH', 'AT', 'GB']
     cpv_award_codes: NotRequired[list[str]]
     display_name: str
     employee_count: NotRequired[int | None]
@@ -844,6 +924,7 @@ class Shareholder(TypedDict):
 
 class ShareholdersCoverage(TypedDict):
     object: NotRequired[Literal['shareholders_coverage']]
+    reason: NotRequired[str | None]
     status: NotRequired[
         Literal['available', 'not_applicable', 'not_filed', 'token_limit_reached']
     ]
@@ -998,8 +1079,15 @@ class Wz2025Score(TypedDict):
     code: str
     description: NotRequired[str | None]
     object: NotRequired[Literal['wz_2025_score']]
+    other_classifications: NotRequired[list[ClassificationRepresentation]]
     score: NotRequired[float | None]
     section: NotRequired[str | None]
+    source_classification: NotRequired[
+        Literal['wz_2008', 'nace_rev_2', 'nace_rev_2_1', 'oenace_2025', 'uk_sic_2007']
+        | None
+    ]
+    source_code: NotRequired[str | None]
+    source_title: NotRequired[str | None]
 
 
 class AiInsightsBlock(TypedDict):
@@ -1137,7 +1225,7 @@ class CompanyDocumentDownload(TypedDict):
 
 
 class CompanyDocumentList(TypedDict):
-    country_code: Literal['DE', 'CH', 'AT']
+    country_code: Literal['DE', 'CH', 'AT', 'GB']
     coverage: DocumentsCoverage
     data: list[CompanyDocumentListItem]
     eu_id: str
@@ -1205,6 +1293,7 @@ class FinancialSummaryBlock(TypedDict):
     latest_total_assets: NotRequired[Money | None]
     latest_total_liabilities_and_equity: NotRequired[Money | None]
     object: NotRequired[Literal['financial_summary']]
+    statement_scope: NotRequired[Literal['entity', 'group'] | None]
 
 
 class FounderProfileBlock(TypedDict):
@@ -1222,6 +1311,15 @@ class FounderProfileBlock(TypedDict):
     object: NotRequired[Literal['founder_profile']]
     oldest_founder_birth_year: NotRequired[int | None]
     succession_risk: NotRequired[bool | None]
+
+
+class GroupAccountsReference(TypedDict):
+    financials_url: str
+    group_accounts_latest_year: int
+    object: NotRequired[Literal['group_accounts_reference']]
+    own_accounts_latest_year: NotRequired[int | None]
+    parent: RelatedCompany
+    web_url: str
 
 
 class IncomeStatementPositions(TypedDict):
@@ -1398,11 +1496,12 @@ class CompanyDetail(TypedDict):
     business_info: NotRequired[BusinessBlock | None]
     business_purpose: NotRequired[str | None]
     contact: ContactBlock
-    country_code: Literal['DE', 'CH', 'AT']
+    country_code: Literal['DE', 'CH', 'AT', 'GB']
     display_name: str
     documents: NotRequired[list[CompanyDocument]]
     elf_code: NotRequired[str | None]
     eu_id: str
+    eu_sme_declaration: NotRequired[EuSmeDeclaration | None]
     financial_summary: NotRequired[FinancialSummaryBlock | None]
     first_register_entry_at: NotRequired[str | None]
     founder_profile: NotRequired[FounderProfileBlock | None]
@@ -1420,6 +1519,7 @@ class CompanyDetail(TypedDict):
     lei_graph: NotRequired[LeiGraphBlock | None]
     management: NotRequired[list[Member]]
     object: NotRequired[Literal['company']]
+    previous_registration: NotRequired[PreviousRegistration | None]
     register_canton: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
@@ -1466,11 +1566,29 @@ class FinancialMetric(TypedDict):
     revenue_ceiling: NotRequired[Money | None]
     size_basis: NotRequired[str | None]
     size_class: NotRequired[str | None]
+    statement_scope: NotRequired[Literal['entity', 'group'] | None]
     year: int
+
+
+class FinancialStatementHistory(TypedDict):
+    assets: NotRequired[list[FinancialRow]]
+    employees: NotRequired[list[EmployeeYear]]
+    liabilities_and_equity: NotRequired[list[FinancialRow]]
+    metrics: NotRequired[list[FinancialMetric]]
+    object: NotRequired[Literal['financial_statement_history']]
+    profit_and_loss: NotRequired[list[FinancialRow]]
+    scope: Literal['entity', 'group']
+
+
+class FinancialScopesBlock(TypedDict):
+    entity: NotRequired[FinancialStatementHistory | None]
+    group: NotRequired[FinancialStatementHistory | None]
+    object: NotRequired[Literal['financial_scopes']]
 
 
 class FinancialHistoryBlock(TypedDict):
     assets: NotRequired[list[FinancialRow]]
+    by_scope: NotRequired[FinancialScopesBlock | None]
     liabilities_and_equity: NotRequired[list[FinancialRow]]
     metrics: NotRequired[list[FinancialMetric]]
     object: NotRequired[Literal['financial_history']]
@@ -1482,6 +1600,7 @@ class CompanyFinancials(TypedDict):
     eu_id: str
     financial_publications: NotRequired[list[FinancialPublication]]
     freshness: Freshness
+    group_accounts: NotRequired[GroupAccountsReference | None]
     history: FinancialHistoryBlock
     object: NotRequired[Literal['company_financials']]
     relationships: NotRequired[RelationshipsBlock | None]

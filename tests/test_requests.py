@@ -16,14 +16,18 @@ import pytest
 import firmendata.async_client
 import firmendata.client
 from firmendata import (
+    AmbiguousCompanyIdError,
     APIConnectionError,
     APITimeoutError,
     AsyncFirmenData,
+    CompanyIdCandidate,
+    ConflictError,
     FirmenData,
     NotFoundError,
     RateLimitError,
     ResponseInfo,
     ServerError,
+    ValidationError,
     __version__,
 )
 from firmendata._retry import should_retry
@@ -77,6 +81,62 @@ def problem(slug, status):
         "detail": "boom",
         "request_id": "req-body",
     }
+
+
+# ---------------------------------------------------------------------------
+# Incomplete company ids
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("candidates", [
+    None,
+    [],
+    [
+        {"eu_id": "DER2707_R2701.HRB3910", "name": "Example GmbH", "is_deleted": False},
+        {"eu_id": "DER2707_R2702.HRB3910", "name": "Other GmbH", "is_deleted": True},
+    ],
+])
+@pytest.mark.parametrize("method", ["get_company", "list_subscriptions"])
+async def test_ambiguous_company_id_exposes_candidates(make_client, candidates, method):
+    body = problem("ambiguous-company-id", 409)
+    if candidates is not None:
+        body["candidates"] = candidates
+
+    def handler(request):
+        return httpx.Response(409, json=body)
+
+    with pytest.raises(AmbiguousCompanyIdError) as exc:
+        await call(make_client(handler), method, eu_id="DER2707.HRB3910")
+    expected: list[CompanyIdCandidate] = candidates or []
+    assert exc.value.candidates == expected
+    assert isinstance(exc.value, ConflictError)
+    assert exc.value.status_code == 409
+    assert exc.value.request_id == "req-body"
+    assert exc.value.problem_type == body["type"]
+
+
+@pytest.mark.parametrize("body", [problem("conflict", 409), None])
+async def test_plain_conflict_remains_conflict_error(make_client, body):
+    def handler(request):
+        return httpx.Response(409, json=body)
+
+    with pytest.raises(ConflictError) as exc:
+        await call(make_client(handler), "list_subscriptions")
+    assert type(exc.value) is ConflictError
+
+
+@pytest.mark.parametrize("eu_id,canonical", [
+    ("DEG1207.HRB14323", "DEG1207.HRB14323FF"),
+    ("DER2707.HRB3910", "DER2707_R2701.HRB3910"),
+])
+async def test_incomplete_id_is_sent_unchanged_and_canonical_id_returned(
+    make_client, eu_id, canonical,
+):
+    def handler(request):
+        assert request.url.path == f"/v1/companies/{eu_id}"
+        return httpx.Response(200, json={"eu_id": canonical})
+
+    result = await call(make_client(handler), "get_company", eu_id)
+    assert result["eu_id"] == canonical
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +244,31 @@ async def test_financials_details(make_client):
         await call(client, "get_financials", "DE1")
         await call(client, "get_financials", "DE1", details=False, years=3)
     assert seen == [{}, {"details": "false", "years": "3"}]
+
+
+@pytest.mark.parametrize("scope", [["entity", "group"], ("group",)])
+async def test_financials_scope_repeats_keys_and_year_is_sent(make_client, scope):
+    def handler(request):
+        assert request.method == "GET"
+        assert request.url.path == "/v1/companies/DE1/financials"
+        assert request.url.params.multi_items() == [
+            ("details", "false"), *[("scope", value) for value in scope], ("year", "2025"),
+        ]
+        return httpx.Response(200, json={})
+
+    await call(make_client(handler), "get_financials", "DE1", details=False, scope=scope, year=2025)
+
+
+async def test_financials_year_and_years_validation_is_left_to_server(make_client):
+    def handler(request):
+        assert dict(request.url.params) == {"years": "3", "year": "2025"}
+        body = problem("validation-error", 422)
+        body["errors"] = [{"param": "year", "message": "Cannot be combined with years"}]
+        return httpx.Response(422, json=body)
+
+    with pytest.raises(ValidationError) as exc:
+        await call(make_client(handler), "get_financials", "DE1", year=2025, years=3)
+    assert exc.value.errors[0]["param"] == "year"
 
 
 async def test_include_line_items_is_deprecated_and_maps_to_details(make_client):

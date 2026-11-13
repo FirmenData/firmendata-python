@@ -20,10 +20,12 @@ from ._version import __version__
 from .async_client import AsyncFirmenData
 from .client import FirmenData
 from .errors import (
+    AmbiguousCompanyIdError,
     APIConnectionError,
     APIError,
     APITimeoutError,
     AuthenticationError,
+    CompanyIdCandidate,
     ConflictError,
     FirmenDataError,
     InsufficientCreditsError,
@@ -54,6 +56,8 @@ __all__ = [
     "InsufficientCreditsError",
     "NotFoundError",
     "ConflictError",
+    "AmbiguousCompanyIdError",
+    "CompanyIdCandidate",
     "ValidationError",
     "RateLimitError",
     "ServerError",
