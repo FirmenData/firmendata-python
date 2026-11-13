@@ -114,6 +114,13 @@ company = fd.get_company(eu_id)
 history = fd.get_history(eu_id)   # chronological register entries
 ```
 
+German ids may omit the register-number suffix or branch-court part:
+`DEG1207.HRB14323` can resolve to `DEG1207.HRB14323FF`, and
+`DER2707.HRB3910` to `DER2707_R2701.HRB3910`. The API accepts an incomplete
+id when it identifies exactly one company; otherwise
+[`AmbiguousCompanyIdError`](#errors) lists the candidates. The response's
+`eu_id` is always canonical.
+
 Identity and seat, register reference, legal status from the commercial
 register and insolvency notices, industry classification, contact details
 (including `phones` and `primary_email`) and web presence.
@@ -146,6 +153,20 @@ per-year array to the most recent fiscal years:
 
 ```python
 lean = fd.get_financials(eu_id, details=False, years=5)
+```
+
+`scope` selects which statements `history["by_scope"]` carries in full:
+`"entity"` for the company's own accounts, `"group"` for consolidated accounts,
+or both (the default). Entity and group statements stay separate there.
+Lists repeat the query key as `scope=entity&scope=group`.
+
+`year` (1900–2100) keeps only that fiscal year in every per-year array;
+`summary` still describes the latest year on record. Combining `year` with
+`years` raises the server's `ValidationError` (422).
+
+```python
+entity_year = fd.get_financials(eu_id, scope=["entity"], year=2025)
+both_scopes = fd.get_financials(eu_id, scope=["entity", "group"], year=2025)
 ```
 
 `include_line_items` from earlier versions still works but is deprecated: it
@@ -414,6 +435,20 @@ except RateLimitError as e:
     ...                      # e.retry_after: seconds to wait, from the server
 ```
 
+`AmbiguousCompanyIdError` is a `ConflictError` with `.candidates`, each
+containing `eu_id`, `name` and `is_deleted`. Select a canonical id before
+retrying:
+
+```python
+from firmendata import AmbiguousCompanyIdError
+
+try:
+    company = fd.get_company("DER2707.HRB3910")
+except AmbiguousCompanyIdError as e:
+    for candidate in e.candidates:
+        print(candidate["eu_id"], candidate["name"], candidate["is_deleted"])
+```
+
 | Exception | Status | Meaning |
 |---|---|---|
 | `AuthenticationError` | 401 | Missing/invalid key, or a keyless call used a paid feature |
@@ -421,6 +456,7 @@ except RateLimitError as e:
 | `InsufficientCreditsError` | 402 | Balance too low for this call |
 | `NotFoundError` | 404 | No such company, list, subscription or event |
 | `ConflictError` | 409 | Conflicts with existing state |
+| `AmbiguousCompanyIdError` | 409 | Incomplete German id matches several companies — see `.candidates` |
 | `ValidationError` | 422 | Bad parameters — see `.errors` (`{"param", "message"}` each) |
 | `RateLimitError` | 429 | Retries exhausted, or a long `Retry-After` — see `.retry_after` |
 | `ServerError` | 5xx | Retried automatically for idempotent calls |

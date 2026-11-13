@@ -74,7 +74,7 @@ async def close(events):
         events.close()
 
 
-@pytest.mark.parametrize("country", [None, "DE", "CH", "AT"])
+@pytest.mark.parametrize("country", [None, "DE", "CH", "AT", "GB"])
 async def test_autocomplete_country(make_client, country):
     response = {"data": [{"eu_id": "AT1", "country_code": "AT"}]}
 

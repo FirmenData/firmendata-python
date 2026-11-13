@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from typing import Any, Literal, Unpack
 
 import httpx
@@ -45,6 +45,7 @@ from .types import (
     CompanyHistory,
     CompanyListDetailResponse,
     CompanyListsResponse,
+    Country,
     FeedResponse,
     SearchHit,
     SearchResponse,
@@ -167,7 +168,7 @@ class AsyncFirmenData(_BaseClient):
 
     async def autocomplete(
             self, q: str, *, limit: int = 10, fetch_realtime: bool = False,
-            country: Literal["DE", "CH", "AT"] | None = None, timeout: float | None = None,
+            country: Country | None = None, timeout: float | None = None,
     ) -> AutocompleteResponse:
         """Free, keyless company-name suggestions. See the sync client."""
         return await self._request(
@@ -211,6 +212,12 @@ class AsyncFirmenData(_BaseClient):
     async def get_company(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> CompanyDetail:
+        """Full profile for one company.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -223,16 +230,32 @@ class AsyncFirmenData(_BaseClient):
             details: bool | None = None,
             include_line_items: bool | None = None,
             years: int | None = None,
+            scope: Sequence[Literal["entity", "group"]] | None = None,
+            year: int | None = None,
     ) -> CompanyFinancials:
-        """Multi-year financial statements. See the sync client."""
+        """Multi-year financial statements. See the sync client.
+
+        ``scope`` selects full entity/group histories in ``history.by_scope`` (default both).
+        ``year`` selects one fiscal year (1900–2100); combining it with ``years`` returns 422.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/financials",
-            params=_financial_params(details, include_line_items, years),
+            params=_financial_params(details, include_line_items, years, scope, year),
         )
 
     async def get_shareholders(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> ShareholdersReport:
+        """Cap table from the most recent filing. See the sync client.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/shareholders",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -241,6 +264,12 @@ class AsyncFirmenData(_BaseClient):
     async def get_ubo(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> UboReport:
+        """Ultimate beneficial owners. See the sync client.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/ubo",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -249,6 +278,12 @@ class AsyncFirmenData(_BaseClient):
     async def get_history(
             self, eu_id: str, *, fetch_realtime: bool = False, timeout: float | None = None,
     ) -> CompanyHistory:
+        """Chronological register history. See the sync client.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/history",
             params={"fetch_realtime": fetch_realtime}, timeout=timeout,
@@ -257,7 +292,12 @@ class AsyncFirmenData(_BaseClient):
     async def list_documents(
             self, eu_id: str, *, timeout: float | None = None,
     ) -> CompanyDocumentList:
-        """Check the registry live and list documents. See the sync client."""
+        """Check the registry live and list documents. See the sync client.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/documents", live=True, timeout=timeout,
         )
@@ -272,6 +312,12 @@ class AsyncFirmenData(_BaseClient):
             fetch_realtime: bool = False,
             timeout: float | None = None,
     ) -> CompanyDocumentDownload:
+        """Presigned download URL for a register document. See the sync client.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request(
             "GET", f"/v1/companies/{_segment(eu_id)}/documents/download",
             params={
@@ -332,12 +378,23 @@ class AsyncFirmenData(_BaseClient):
     async def list_subscriptions(
             self, **filters: Unpack[SubscriptionFilters],
     ) -> SubscriptionList:
+        """List change subscriptions.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request("GET", "/v1/subscriptions", params=dict(filters))
 
     async def create_subscription(
             self, **body: Unpack[SubscriptionCreateRequest],
     ) -> SubscriptionCreated:
-        """Not retried on 5xx — a replay could create a duplicate."""
+        """Not retried on 5xx — a replay could create a duplicate.
+
+        A German id without its register-number suffix or branch-court part is accepted
+        when it identifies exactly one company; otherwise ``AmbiguousCompanyIdError``
+        lists the candidates.
+        """
         return await self._request("POST", "/v1/subscriptions", json=dict(body))
 
     async def get_subscription(self, subscription_id: str) -> Subscription:

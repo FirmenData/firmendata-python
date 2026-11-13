@@ -7,7 +7,7 @@ import re
 import warnings
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 from urllib.parse import quote
 
 import httpx
@@ -115,6 +115,7 @@ def _request_sent(exc: httpx.TransportError) -> bool:
 
 def _financial_params(
         details: bool | None, include_line_items: bool | None, years: int | None,
+        scope: Sequence[Literal["entity", "group"]] | None, year: int | None,
 ) -> dict[str, Any]:
     if include_line_items is not None:
         warnings.warn(
@@ -125,7 +126,7 @@ def _financial_params(
         )
         if details is None:
             details = include_line_items
-    return {"details": details, "years": years}
+    return {"details": details, "years": years, "scope": scope, "year": year}
 
 
 class _BaseClient:

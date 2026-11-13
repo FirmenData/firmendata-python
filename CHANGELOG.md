@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.4.0
+
+Regenerated from the updated API contract. **Additive, non-breaking.**
+
+**Coverage and fields**
+
+- Incomplete German company ids are accepted when they identify exactly one
+  company, including ids without a register-number suffix or branch-court
+  part. Response bodies always carry the canonical `eu_id`.
+- Company profiles include an EU SME declaration and previous registration.
+- Financials include a group accounts reference; document coverage includes
+  an external document link; shareholder coverage includes an explanation.
+- WZ 2025 classifications include their original classification codes and
+  titles, plus equivalent codes in other classification systems.
+
+**Financials**
+
+- `get_financials()` takes `scope` (`"entity"`, `"group"`, or both by default)
+  to select full histories in `history["by_scope"]`. Entity and group
+  statements are kept apart; metrics, line items and summaries identify
+  their statement scope.
+- `year` (1900–2100) selects one fiscal year in every per-year array.
+  `summary` stays on the latest year on record. Combining `year` with
+  `years` raises the server's `ValidationError` (422).
+
+**Client behaviour**
+
+- New `AmbiguousCompanyIdError`, a subclass of `ConflictError`, for a 409
+  `ambiguous-company-id` problem. Its `.candidates` lists canonical company
+  ids, names and deletion flags; it is empty when candidates are absent.
+  `CompanyIdCandidate` is exported for typing these entries. Other 409
+  conflicts continue to raise `ConflictError`.
+
 ## 1.3.0
 
 Regenerated from the updated API contract. **Additive, non-breaking**, except
