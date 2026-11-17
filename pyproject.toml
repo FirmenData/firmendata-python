@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "firmendata"
 dynamic = ["version"]
-description = "Official Python client for the firmendata API: German, Swiss and Austrian company data"
+description = "Official Python client for the firmendata API: German, Swiss, Austrian and UK company data"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [{ name = "FirmenData", email = "info@firmendata.com" }]
 keywords = [
-    "firmendata", "germany", "switzerland", "austria", "company-data", "handelsregister",
+    "firmendata", "germany", "switzerland", "austria", "uk", "companies-house", "company-data", "handelsregister",
     "unternehmensregister", "firmenbuch", "company-register", "kyc", "ubo", "api-client",
 ]
 classifiers = [
