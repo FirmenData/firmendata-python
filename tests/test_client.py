@@ -42,14 +42,20 @@ def client_with(handler, **kw) -> FirmenData:
     )
 
 
-@pytest.fixture(params=["DE", "CH"])
+GB_FILINGS = "https://find-and-update.company-information.service.gov.uk/company/1/filing-history"
+
+
+@pytest.fixture(params=["DE", "CH", "GB"])
 def document_list(request):
     country = request.param
     return {
         "object": "company_document_list",
         "eu_id": f"{country}1",
         "country_code": country,
-        "coverage": {"status": "available" if country == "DE" else "not_applicable"},
+        "coverage": {
+            "status": "available" if country == "DE" else "not_applicable",
+            **({"external_url": GB_FILINGS} if country == "GB" else {}),
+        },
         "freshness": {
             "last_checked_at": "2026-10-01T12:00:00Z" if country == "DE" else None,
             "realtime_fetching_status": "success" if country == "DE" else "skipped_not_applicable",

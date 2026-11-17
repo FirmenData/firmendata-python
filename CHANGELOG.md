@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Regenerated from the UK-flip API contract. **Additive, non-breaking.**
+
+- `GB` is accepted as country and returned as `country_code`.
+- Legal-event `sources` include `companies_house`; industry `source_classification` includes `uk_sic_2007`.
+- `DocumentsCoverage.external_url` links UK companies to their Companies House filing history; shareholders coverage carries `reason`.
+
 ## 1.4.0
 
 Regenerated from the updated API contract. **Additive, non-breaking.**
