@@ -203,10 +203,23 @@ class CompanyListSummary(TypedDict):
     updated_at: str
 
 
+CompanyNameMatch: TypeAlias = Literal['words', 'prefix']
+
+
 CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
 Country: TypeAlias = Literal['DE', 'CH', 'AT', 'GB']
+
+
+class CreditBalance(TypedDict):
+    balance: int
+    free_monthly: int
+    free_monthly_allowance: int
+    next_free_reset: NotRequired[str | None]
+    object: NotRequired[Literal['credit_balance']]
+    purchased: int
+    spent_last_7_days: int
 
 
 class DocumentsCoverage(TypedDict):

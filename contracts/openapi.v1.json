@@ -2749,6 +2749,15 @@
         "title": "CompanyListsResponse",
         "type": "object"
       },
+      "CompanyNameMatch": {
+        "description": "How `company_name` is matched.\n\n- `words` (default) — the name starts with the query, or contains every\n  query word anywhere.\n- `prefix` — the name starts with the query, nothing else.\n\nBoth ignore case, accents and legal-form suffixes.",
+        "enum": [
+          "words",
+          "prefix"
+        ],
+        "title": "CompanyNameMatch",
+        "type": "string"
+      },
       "CompanySize": {
         "description": "Statutory size class under § 267 / § 267a HGB, read from the filing.\n\nA class is assigned only where the company claimed a size-dependent\nrelief, which is an assertion of being at most that size. Publishing more\nthan required is permitted at every size and asserts nothing, so a full\nprofit-and-loss statement alone establishes no class — for those the\nreported revenue is the answer. Micro companies may declare their class\nin the notes (Anhang). The values are therefore not exhaustive,\nand selecting all is a real filter rather than a no-op.",
         "enum": [
@@ -2842,6 +2851,83 @@
         ],
         "title": "Country",
         "type": "string"
+      },
+      "CreditBalance": {
+        "description": "Credits left on the account that owns the bearer token.",
+        "properties": {
+          "balance": {
+            "description": "Credits you can spend now: `free_monthly` + `purchased`. A call that costs more than this is rejected with `402`.",
+            "examples": [
+              1250
+            ],
+            "title": "Balance",
+            "type": "integer"
+          },
+          "free_monthly": {
+            "description": "Free monthly credits left inside `balance`. Spent first; whatever is left expires at `next_free_reset`.",
+            "examples": [
+              250
+            ],
+            "title": "Free Monthly",
+            "type": "integer"
+          },
+          "free_monthly_allowance": {
+            "description": "What `free_monthly` is reset to at `next_free_reset`. `0` when the account receives no free monthly credits.",
+            "examples": [
+              800
+            ],
+            "title": "Free Monthly Allowance",
+            "type": "integer"
+          },
+          "next_free_reset": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the free monthly credits are next reset (00:00 Europe/Berlin on the 1st of the month). `null` when the account receives no free monthly credits.",
+            "examples": [
+              "2026-12-01T00:00:00+01:00"
+            ],
+            "title": "Next Free Reset"
+          },
+          "object": {
+            "const": "credit_balance",
+            "default": "credit_balance",
+            "description": "Discriminator. Always `credit_balance`.",
+            "title": "Object",
+            "type": "string"
+          },
+          "purchased": {
+            "description": "Purchased (top-up) and granted credits inside `balance`. They never expire.",
+            "examples": [
+              1000
+            ],
+            "title": "Purchased",
+            "type": "integer"
+          },
+          "spent_last_7_days": {
+            "description": "Credits your API calls spent in the last 7 days, to forecast how long `balance` lasts.",
+            "examples": [
+              340
+            ],
+            "title": "Spent Last 7 Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance",
+          "purchased",
+          "free_monthly",
+          "free_monthly_allowance",
+          "spent_last_7_days"
+        ],
+        "title": "CreditBalance",
+        "type": "object"
       },
       "DocumentsCoverage": {
         "properties": {
@@ -4374,7 +4460,7 @@
             "type": "string"
           },
           "realtime_fetching_status": {
-            "description": "Outcome of the realtime fetch attempt for this request (`fetch_realtime=true`). `realtime_fetching_disabled` when the parameter was not set; `success` when fresh data was merged into the response; otherwise the response falls back to the cached read and this field reports why.",
+            "description": "Outcome of the realtime fetch attempt for this request (`fetch_realtime=true`). `realtime_fetching_disabled` when the parameter was not set (the default: a cached read) or does not apply to this company's country or this endpoint; `success` when fresh data was merged into the response; otherwise the response falls back to the cached read and this field reports why.",
             "enum": [
               "success",
               "platform_unavailable",
@@ -9169,7 +9255,7 @@
       "email": "info@firmendata.com",
       "name": "firmendata Support"
     },
-    "description": "Programmatic access to German, Swiss, Austrian and UK company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).\n\n## Identifying your integration\n\nOptionally send `X-FirmenData-Client: <name>/<version>` (lower-case name of letters, digits, `.`, `_`, `-`, up to 32 characters; version up to 32 characters, e.g. `X-FirmenData-Client: acme-crm/2.1.0`) so we can tell integrations apart when you contact support. Our SDKs and the n8n node send it automatically. The header is informational only: it never changes pricing, rate limits or responses, and an invalid value is ignored.\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the register. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice inline before responding, from the German\n   registries or, for UK (GB) companies, from Companies House. Costs more\n   credits and adds upstream latency (typically several seconds, sometimes\n   longer). For company endpoints, this affects German (DE) and UK (GB)\n   companies; Swiss (CH) and Austrian (AT) companies ignore the flag and\n   incur no realtime surcharge. On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   German registers (German companies only; with `country` set to another\n   country the flag has no effect), so companies we do not have yet can appear in the\n   same response with their identity and registered seat. Their full\n   profile may become available shortly after at no extra cost.\n\n3. **Subscriptions** (DE, AT, CH and UK companies; each subscription type\n   lists the countries it covers). The only mode that *guarantees* you eventually\n   see fresh data: failed data checks are retried on the\n   configured cadence. Updates arrive by webhook or through the events API\n   when something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. A search cursor also remembers the\nfilters of the request that issued it, so the next page needs only\n`cursor`; repeating the same filters is fine, changing them is a `422`.\nSearch and list cursors are not\nguaranteed to survive a deploy. Feed cursors under `/v1/feeds` persist\nacross deploys and restarts: keep `next_cursor` even after an empty page.\nFeed positions expire after seven days; restart with `since` if expired.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\nA `503 Service Unavailable` (problem type `service-unavailable`) means the\nservice was briefly too busy to answer in time. Like every error it costs\nno credits. It carries a `Retry-After` header (seconds): wait that long and\nsend the same request again, with the same `cursor` when paginating.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. Each detected\n  change becomes a `subscription_event`, and you retrieve the payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
+    "description": "Programmatic access to German, Swiss, Austrian and UK company data: register profile, filed\nfinancial statements, company events, and current cap tables.\n\n## Documentation and machine-readable entry points\n\nEverything below is public and needs no API key:\n\n- `GET https://api.firmendata.com/v1/openapi.json`: this OpenAPI 3 document as plain JSON, for SDK generators and tooling.\n- `GET https://api.firmendata.com/v1`: a small JSON index linking the spec, the interactive references and the account endpoints.\n- Interactive references: [Scalar](https://api.firmendata.com/v1/scalar), [Swagger UI](https://api.firmendata.com/v1/docs), [ReDoc](https://api.firmendata.com/v1/redoc).\n- Guides and SDKs: [firmendata.com/en/developer](https://firmendata.com/en/developer).\n\n## Authentication\n\nBearer token in the `Authorization` header. Create and manage your\ntokens in [API Key Settings](https://firmendata.com/de/developer/api-keys).\n\n## Identifying your integration\n\nOptionally send `X-FirmenData-Client: <name>/<version>` (lower-case name of letters, digits, `.`, `_`, `-`, up to 32 characters; version up to 32 characters, e.g. `X-FirmenData-Client: acme-crm/2.1.0`) so we can tell integrations apart when you contact support. Our SDKs and the n8n node send it automatically. The header is informational only: it never changes pricing, rate limits or responses, and an invalid value is ignored.\n\n## Data freshness\n\nEvery company endpoint exposes a `freshness` object so you can see, at\na glance, how stale the response is and which fetch mode produced it:\n\n```jsonc\n\"freshness\": {\n  \"object\": \"freshness\",\n  \"last_checked_at\": \"2026-04-30T12:14:08Z\",\n  \"realtime_fetching_status\": \"realtime_fetching_disabled\"\n}\n```\n\n`last_checked_at` is the UTC timestamp of the last successful refresh\nof the underlying data slice from the register. Compare it\nagainst your own staleness tolerance to decide which of the three\nfetch modes below fits the call. `null` means the slice has never been\nsuccessfully fetched for this company.\n\nThere are three ways to consume the data, each with a different\nfreshness guarantee:\n\n1. **Cached read (default).** Returns the most recent data we already\n   have on file for the company. Cheapest and fastest. The data may\n   be stale — the `freshness.last_checked_at` field tells you exactly\n   how stale.\n\n2. **Realtime fetch (`fetch_realtime=true`).** Refreshes the\n   underlying slice inline before responding, from the German\n   registries or, for UK (GB) companies, from Companies House. Costs more\n   credits and adds upstream latency (typically several seconds, sometimes\n   longer). For company endpoints, this affects German (DE) and UK (GB)\n   companies; Swiss (CH) and Austrian (AT) companies ignore the flag and\n   incur no realtime surcharge. On upstream\n   failure, the response falls back to the most recent cached data\n   for the company; `freshness.realtime_fetching_status` reports the\n   outcome (`success`, `platform_unavailable`,\n   `documents_temporarily_unavailable`, `file_unavailable`,\n   `company_unavailable`, or `realtime_fetching_disabled`). When we\n   have no record of the company at all, the endpoint returns 404\n   the same as without `fetch_realtime`.\n\n   Realtime is opt-in per call and available to every API key (no plan\n   upgrade needed); only the call price differs. Without\n   `fetch_realtime=true`, every response is a cached read and reports\n   `realtime_fetching_status: realtime_fetching_disabled`. That is the\n   normal value, not an error and not a restriction of your key. The values:\n\n   | `realtime_fetching_status` | Meaning |\n   |---|---|\n   | `realtime_fetching_disabled` | No live fetch ran: `fetch_realtime` was not set (the default), or it does not apply to this company's country or this endpoint. Cached data. |\n   | `success` | The live fetch ran and its data is in this response. |\n   | `platform_unavailable` | The register could not be reached or the live fetch failed; cached data. |\n   | `documents_temporarily_unavailable` | The register answered but its documents could not be fetched right now; cached data. |\n   | `file_unavailable` | The register offers no file of the needed kind for this company; cached data. |\n   | `company_unavailable` | The register did not return this company; cached data. |\n\n   On `/companies/autocomplete` and `/companies/search` the flag means\n   *discovery* rather than refresh: the keyword is searched against the\n   German registers (German companies only; with `country` set to another\n   country the flag has no effect), so companies we do not have yet can appear in the\n   same response with their identity and registered seat. Their full\n   profile may become available shortly after at no extra cost.\n\n3. **Subscriptions** (DE, AT, CH and UK companies; each subscription type\n   lists the countries it covers). The only mode that *guarantees* you eventually\n   see fresh data: failed data checks are retried on the\n   configured cadence. Updates arrive by webhook or through the events API\n   when something changes. Manage subscriptions via `/subscriptions`.\n\n## Pagination\n\nList endpoints (`/companies/search`, `/lists/{list_id}`, `/subscriptions`,\n`/subscriptions/{id}/events`) use opaque cursor pagination and return the\nsame `pagination` object. Pass the `pagination.next_cursor` value from a\nresponse back unchanged as the `cursor` query parameter to fetch the next\npage. Cursors are signed: one that was edited, or issued by a different\nendpoint, is rejected with `422`. A search cursor also remembers the\nfilters of the request that issued it, so the next page needs only\n`cursor`; repeating the same filters is fine, changing them is a `422`.\nSearch and list cursors are not\nguaranteed to survive a deploy. Feed cursors under `/v1/feeds` persist\nacross deploys and restarts: keep `next_cursor` even after an empty page.\nFeed positions expire after seven days; restart with `since` if expired.\n\n## Rate limits\n\nEvery bearer token is capped at:\n\n- **5 requests per second** (burst protection)\n- **100 requests per minute** (sustained)\n\nBoth windows are enforced via a sliding-window counter, so limits degrade\ngracefully across window boundaries. Every response — success or error —\nincludes headers so clients can self-pace:\n\n- `RateLimit-Limit` — numeric limit of the tighter window currently applying\n- `RateLimit-Remaining` — calls left in that window (never negative)\n- `RateLimit-Reset` — seconds until the window resets\n- `RateLimit-Warning` — present only when fewer than 10% of the window\n  remains; a hint to slow down before hitting 429\n\nWhen a limit is exceeded the server returns `429 Too Many Requests` with\na `Retry-After` header (seconds) and an RFC 7807 body. Rejected requests\ndo not consume the limit or any credits — they are free to retry once\nthe reset period elapses.\n\n## Errors\n\nAll non-2xx responses follow [RFC 7807 `application/problem+json`](https://datatracker.ietf.org/doc/html/rfc7807).\nThe body always carries `type`, `title`, `status`, `detail`, `instance` and\n`request_id` (the same value as the `X-Request-Id` response header); 422\nresponses add `errors: [{param, message}]`, one entry per offending\nparameter.\n\nInput is validated strictly, so a mistake fails loudly instead of returning\nunfiltered data: an unknown query parameter, a value outside a parameter's\nvocabulary, and an inverted range (`revenue_min` above `revenue_max`,\n`founded_from` after `founded_to`) are all `422`. Enum values stay\ncase-insensitive and accept the documented alternative spellings.\n\nA `503 Service Unavailable` (problem type `service-unavailable`) means the\nservice was briefly too busy to answer in time. Like every error it costs\nno credits. It carries a `Retry-After` header (seconds): wait that long and\nsend the same request again, with the same `cursor` when paginating.\n\n## Stability\n\nObject types carry an `object` discriminator (e.g. `\"object\": \"company\"`).\nNullable fields are always present (never omitted) and list fields default\nto `[]` so client codegen output is stable across releases.\n\n## Subscriptions\n\nStay current without polling on a fixed schedule: subscribe a single\ncompany to one data slice and firmendata detects changes for you on the\ncadence you choose, under `/subscriptions`. Pick one of three delivery\nmodes via `notification_type`:\n\n* **Webhook** (`notification_type: \"webhook\"`) — firmendata POSTs a\n  signed JSON body to your `webhook_url` on each change. Every request is\n  HMAC-SHA256 signed; verify `X-Firmendata-Signature` against the\n  `webhook_secret` returned at creation. Requires `webhook_url`.\n\n* **Email** (`notification_type: \"email\"`) — a bilingual notification to\n  `recipient_email` (with the register document attached as a PDF for\n  `doc_*` subscriptions). Requires `recipient_email`.\n\n* **Poll-only / async** (`notification_type: null` — the **default**) —\n  no outbound delivery is performed. Each detected\n  change becomes a `subscription_event`, and you retrieve the payload\n  by polling `GET /subscriptions/{id}/events` with the subscription\n  (job) id returned on create. Omit both `webhook_url` and\n  `recipient_email`. Ideal when you can't expose an inbound webhook\n  endpoint and would rather pull changes on your own schedule.\n\n`mode` selects `recurring` (deliver on every change) or `one_time`\n(poll until the first successful delivery, then stop); `cadence` controls\nhow often the change check runs.\n\n## Pricing\n\nEvery successful 2xx call deducts credits from your account; 4xx and 5xx\nresponses are free — no credits are spent on failed requests. A 2xx that\ncarries no data is free too: a cap table or UBO report whose\n`coverage.status` says there is nothing on file, or a financials response\nfor a company without any financial data. Every response states what it\ncost in the `X-Credits-Charged` header (`0` when nothing was charged).\n\nCheck your balance at any time with `GET /v1/account/credits` (free):\nit returns `balance`, split into free monthly and purchased credits, and\nthe last 7 days' spend.\n\nPer-endpoint credit costs, subscription pricing, plan allowances, and\nrate-limit tiers are listed on the [pricing page](https://firmendata.com/en/plans)\n— the single source of truth, so this spec links there instead of\nduplicating numbers that can drift.",
     "license": {
       "name": "Commercial",
       "url": "https://firmendata.com/en/terms-and-conditions"
@@ -9179,6 +9265,140 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/v1/account/credits": {
+      "get": {
+        "description": "Credits left on the account that owns the bearer token, split into the\nfree monthly allowance (expires at `next_free_reset`) and purchased credits\n(never expire). Debits spend the free monthly credits first.\n\n**Free:** this call costs 0 credits and works with a balance of 0. Every\nother response also reports what it cost in the `X-Credits-Charged` header,\nso a client can track its spend without polling this endpoint.",
+        "operationId": "get_credit_balance_v1_account_credits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditBalance"
+                }
+              }
+            },
+            "description": "The account's current credit balance.",
+            "headers": {
+              "X-Credits-Charged": {
+                "description": "Credits this call deducted from your balance. `0` for free endpoints and for responses that carry no data.",
+                "schema": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "A valid `Authorization: Bearer <token>` header is required.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "message": "A valid `Authorization: Bearer <token>` header is required.",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 401,
+                  "title": "Authentication required.",
+                  "type": "https://api.firmendata.com/problems/unauthenticated"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Missing, invalid, revoked, or expired bearer token."
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "instance": "/v1/companies/autocomplete",
+                  "message": "Rate limit exceeded: more than 5 requests per 1 second. Retry in 1s.",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 429,
+                  "title": "Too many requests.",
+                  "type": "https://api.firmendata.com/problems/rate-limit-exceeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Rate limit exceeded. Rejected requests do not consume the limit or any credits. Honour `Retry-After` (seconds) before retrying.",
+            "headers": {
+              "RateLimit-Limit": {
+                "description": "Numeric limit of the tighter window currently applying.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Remaining": {
+                "description": "Requests left in that window (0 on 429).",
+                "schema": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                }
+              },
+              "RateLimit-Reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "minimum": 0.0,
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before the next request will succeed.",
+                "schema": {
+                  "minimum": 1.0,
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "example": {
+                  "detail": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "instance": "/v1/companies/DEF1103R.HRB279792B",
+                  "message": "An unexpected error occurred. Please retry later or contact support with the `request_id`.",
+                  "request_id": "req_01HXYZABC123DEF456GHI789J",
+                  "status": 500,
+                  "title": "Internal server error.",
+                  "type": "https://api.firmendata.com/problems/server-error"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unexpected server error."
+          }
+        },
+        "summary": "Get your credit balance",
+        "tags": [
+          "Account"
+        ],
+        "x-codeSamples": [
+          {
+            "label": "cURL",
+            "lang": "shell",
+            "source": "API_KEY=\"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\ncurl -X GET \"https://api.firmendata.com/v1/account/credits\" \\\n  -H \"Authorization: Bearer $API_KEY\""
+          },
+          {
+            "label": "Python (requests)",
+            "lang": "python",
+            "source": "import requests\n\nAPI_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n\nresponse = requests.get(\n    \"https://api.firmendata.com/v1/account/credits\",\n    headers={\"Authorization\": f\"Bearer {API_KEY}\"},\n    timeout=30,\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(data)"
+          },
+          {
+            "label": "JavaScript (fetch)",
+            "lang": "js",
+            "source": "const API_KEY = \"firmendata_live_xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\";\n\nconst response = await fetch(\"https://api.firmendata.com/v1/account/credits\", {\n  method: \"GET\",\n  headers: { \"Authorization\": `Bearer ${API_KEY}` },\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nconst data = await response.json();\nconsole.log(data);"
+          }
+        ]
+      }
+    },
     "/v1/companies/autocomplete": {
       "get": {
         "description": "Companies whose name starts with `q`, from a single character, so a search box can suggest from the first keystroke. Exact core-name matches (ignoring legal-form suffixes) come first, then biggest revenue. From three characters, companies whose name contains `q` as a whole word also rank by revenue. A company that publishes no accounts of its own because a parent's consolidated accounts include it (common for German GmbH & Co. KGs) is sized by its group's revenue: among exact matches as if it were its own, otherwise right after the companies with figures of their own — so `Festo` suggests Festo SE & Co. KG first. Use `country` to restrict suggestions to a company register. Each hit carries just enough context — company name and register reference — to pick the right result out of a dropdown. Not meant for programmatic search — use `/companies/search` for that.\n\n**Free without an API key.** This is the only v1 endpoint you can call unauthenticated. Keyless access is rate limited — modestly, and by address — and is intended for trying the API out, for a search box, or for low-volume use. Send an `Authorization: Bearer <key>` header for substantially higher limits; the call still costs 0 credits either way. Respect `Retry-After` on a `429`.\n\nSet `fetch_realtime=true` (with `q` of at least 3 characters) to also search the German company registers live, so companies we do not have yet — including ones registered only days ago — appear in the same response. **`fetch_realtime` requires an API key** and is billed; keyless requests that set it are rejected with `401`.\n\n\n## Pricing\n\nSee the [pricing page](https://firmendata.com/en/plans) for this endpoint's credit cost.",
@@ -9438,7 +9658,7 @@
         "operationId": "searchCompanies",
         "parameters": [
           {
-            "description": "Unified keyword, tried as an eu_id, then a company-name prefix, then a person name — falling through whenever a phase returns nothing. Overrides `company_name`, `eu_id` and `person_name` when supplied alongside them.",
+            "description": "Unified keyword, tried as an eu_id, then as a company name (matched like `company_name`), then a person name — falling through whenever a phase returns nothing; when even the person reading finds nothing, looser name rewrites are tried (city or bracketed text dropped, compound words joined, close spellings). `company_name` never loosens like this. Overrides `company_name`, `eu_id` and `person_name` when supplied alongside them.",
             "in": "query",
             "name": "q",
             "required": false,
@@ -9453,7 +9673,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Unified keyword, tried as an eu_id, then a company-name prefix, then a person name — falling through whenever a phase returns nothing. Overrides `company_name`, `eu_id` and `person_name` when supplied alongside them.",
+              "description": "Unified keyword, tried as an eu_id, then as a company name (matched like `company_name`), then a person name — falling through whenever a phase returns nothing; when even the person reading finds nothing, looser name rewrites are tried (city or bracketed text dropped, compound words joined, close spellings). `company_name` never loosens like this. Overrides `company_name`, `eu_id` and `person_name` when supplied alongside them.",
               "examples": [
                 "DEF1103R.HRB279792B",
                 "bayerische motoren werke",
@@ -9463,7 +9683,7 @@
             }
           },
           {
-            "description": "Company name prefix, ignoring case, accents, quotes and invisible characters — `Müller \"Süd\" GmbH` and `Müller Süd GmbH` match the same company. The legal-form suffix is kept, so `Bosch GmbH` narrows against `Bosch`.",
+            "description": "Company name, matched by words and ranked by relevance, not a pure prefix filter. A company matches when its name starts with the query or contains every query word anywhere (`bosch` finds `Robert Bosch GmbH`). Legal forms in the query (`GmbH`, `AG`, `Aktiengesellschaft`, `Ltd`, …) are ignored for matching, so `Siemens AG` finds `Siemens Aktiengesellschaft`, and `Allianz Versicherungs-AG` also finds a name like `… Generalvertretung der Allianz Versicherungs AG`. Ranking puts exact names (the query plus at most a legal form) first, then names starting with the query, then word matches, weighted by company size. Case, accents, quotes, umlaut spellings (`ü`/`ue`) and invisible characters are ignored — `Müller \"Süd\" GmbH` and `Mueller Süd GmbH` match the same company.",
             "in": "query",
             "name": "company_name",
             "required": false,
@@ -9478,11 +9698,32 @@
                   "type": "null"
                 }
               ],
-              "description": "Company name prefix, ignoring case, accents, quotes and invisible characters — `Müller \"Süd\" GmbH` and `Müller Süd GmbH` match the same company. The legal-form suffix is kept, so `Bosch GmbH` narrows against `Bosch`.",
+              "description": "Company name, matched by words and ranked by relevance, not a pure prefix filter. A company matches when its name starts with the query or contains every query word anywhere (`bosch` finds `Robert Bosch GmbH`). Legal forms in the query (`GmbH`, `AG`, `Aktiengesellschaft`, `Ltd`, …) are ignored for matching, so `Siemens AG` finds `Siemens Aktiengesellschaft`, and `Allianz Versicherungs-AG` also finds a name like `… Generalvertretung der Allianz Versicherungs AG`. Ranking puts exact names (the query plus at most a legal form) first, then names starting with the query, then word matches, weighted by company size. Case, accents, quotes, umlaut spellings (`ü`/`ue`) and invisible characters are ignored — `Müller \"Süd\" GmbH` and `Mueller Süd GmbH` match the same company.",
               "examples": [
                 "bayerische motoren werke"
               ],
               "title": "Company Name"
+            }
+          },
+          {
+            "description": "How `company_name` is matched; only valid together with `company_name` (not with `q`). `words` (default): the name starts with the query or contains every query word anywhere. `prefix`: the name starts with the query, nothing else. Both ignore case, accents and legal-form suffixes.",
+            "in": "query",
+            "name": "company_name_match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CompanyNameMatch"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How `company_name` is matched; only valid together with `company_name` (not with `q`). `words` (default): the name starts with the query or contains every query word anywhere. `prefix`: the name starts with the query, nothing else. Both ignore case, accents and legal-form suffixes.",
+              "examples": [
+                "prefix"
+              ],
+              "title": "Company Name Match"
             }
           },
           {
@@ -15564,6 +15805,10 @@
     }
   ],
   "tags": [
+    {
+      "description": "Your account: the credit balance. Free calls.",
+      "name": "Account"
+    },
     {
       "description": "Beta company event streams, polled with persistent discovery cursors.",
       "name": "Feeds"
