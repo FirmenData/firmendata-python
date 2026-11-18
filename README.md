@@ -1,8 +1,9 @@
 # firmendata-python
 
 Official Python client for the [firmendata](https://firmendata.com) API — data on
-German, Swiss and Austrian companies from the Unternehmensregister,
-Handelsregister, the Swiss commercial register and the Austrian Firmenbuch:
+German, Swiss, Austrian and UK companies from the Unternehmensregister,
+Handelsregister, the Swiss commercial register, the Austrian Firmenbuch and
+Companies House:
 register search, parsed annual financial statements, company profiles,
 register documents, and ownership chains for KYC.
 
@@ -46,7 +47,7 @@ fd = FirmenData(api_key="firmendata_live_...")
 
 ## Search the register
 
-The main entry point: search German, Swiss and Austrian companies. Different
+The main entry point: search German, Swiss, Austrian and UK companies. Different
 filters combine with AND, repeated values with OR; `city`, `bundesland` and
 `canton` combine into one location filter with OR.
 

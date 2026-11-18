@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+Regenerated from the v1 API contract for the UK (GB) launch. Additive, non-breaking.
+
+- UK (Companies House) companies are public: search, autocomplete and feeds accept `country=GB`.
+- `fetch_realtime` texts: detail, history and UBO also refresh UK companies from Companies House; on search/autocomplete the German live search is skipped (and not billed at the realtime price) when `country` is not `DE`.
+- Field descriptions cover UK companies (`register_court`, `register_number`, `Address.federal_state`, `Wz2025Score.source_classification`, document and history coverage).
+- Previous registrations: `kind` adds `formwechsel` and `merger_continuity`; new `name`, `original_founded_at`; company detail adds `founded_at`.
+
 ## 1.4.0
 
 Regenerated from the updated API contract. **Additive, non-breaking.**

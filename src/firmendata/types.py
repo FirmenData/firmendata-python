@@ -203,10 +203,23 @@ class CompanyListSummary(TypedDict):
     updated_at: str
 
 
+CompanyNameMatch: TypeAlias = Literal['words', 'prefix']
+
+
 CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
 Country: TypeAlias = Literal['DE', 'CH', 'AT', 'GB']
+
+
+class CreditBalance(TypedDict):
+    balance: int
+    free_monthly: int
+    free_monthly_allowance: int
+    next_free_reset: NotRequired[str | None]
+    object: NotRequired[Literal['credit_balance']]
+    purchased: int
+    spent_last_7_days: int
 
 
 class DocumentsCoverage(TypedDict):
@@ -537,8 +550,10 @@ class PotentialBeneficialOwner(TypedDict):
 
 class PreviousRegistration(TypedDict):
     eu_id: NotRequired[str | None]
-    kind: Literal['seat_move', 'court_change']
+    kind: Literal['seat_move', 'court_change', 'formwechsel', 'merger_continuity']
+    name: NotRequired[str | None]
     original_first_register_entry_at: NotRequired[str | None]
+    original_founded_at: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
@@ -1504,6 +1519,7 @@ class CompanyDetail(TypedDict):
     eu_sme_declaration: NotRequired[EuSmeDeclaration | None]
     financial_summary: NotRequired[FinancialSummaryBlock | None]
     first_register_entry_at: NotRequired[str | None]
+    founded_at: NotRequired[str | None]
     founder_profile: NotRequired[FounderProfileBlock | None]
     founding_document_date: NotRequired[str | None]
     freshness: Freshness
