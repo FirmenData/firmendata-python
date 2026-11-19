@@ -35,6 +35,7 @@ class ArticlesEntry(TypedDict):
 
 
 class AutocompleteHit(TypedDict):
+    company_number: NotRequired[str | None]
     country_code: Literal['DE', 'CH', 'AT', 'GB']
     display_name: str
     eu_id: str
@@ -135,6 +136,18 @@ Canton: TypeAlias = Literal[
 ]
 
 
+class CharityAreaOfOperation(TypedDict):
+    name: str
+    parent: NotRequired[str | None]
+    type: NotRequired[str | None]
+
+
+class CharityClassification(TypedDict):
+    code: NotRequired[int | None]
+    description: NotRequired[str | None]
+    type: Literal['What', 'Who', 'How']
+
+
 class ClassificationCode(TypedDict):
     code: str
     object: NotRequired[Literal['classification_code']]
@@ -203,10 +216,23 @@ class CompanyListSummary(TypedDict):
     updated_at: str
 
 
+CompanyNameMatch: TypeAlias = Literal['words', 'prefix']
+
+
 CompanySize: TypeAlias = Literal['kleinst', 'klein', 'mittelgross']
 
 
 Country: TypeAlias = Literal['DE', 'CH', 'AT', 'GB']
+
+
+class CreditBalance(TypedDict):
+    balance: int
+    free_monthly: int
+    free_monthly_allowance: int
+    next_free_reset: NotRequired[str | None]
+    object: NotRequired[Literal['credit_balance']]
+    purchased: int
+    spent_last_7_days: int
 
 
 class DocumentsCoverage(TypedDict):
@@ -232,6 +258,7 @@ class EuSmeDeclaration(TypedDict):
 
 class FeedCompany(TypedDict):
     city: NotRequired[str | None]
+    company_number: NotRequired[str | None]
     country: Literal['DE', 'CH', 'AT', 'GB']
     eu_id: NotRequired[str | None]
     legal_form: NotRequired[str | None]
@@ -385,21 +412,28 @@ class InsolvencyBlock(TypedDict):
 
 InsolvencyCategory: TypeAlias = Literal[
     'Abweisungen mangels Masse',
+    'Administration',
     'Aufhebung der Nachlassstundung',
     'Bestätigung des Nachlassvertrages',
+    'Company voluntary arrangement',
+    "Creditors' voluntary liquidation",
     'Definitive Nachlassstundung',
     'Einstellung mangels Aktiven',
     'Eröffnungen',
     'Konkurseröffnung',
     'Konkursverfahren eröffnet',
+    'Moratorium',
     'Nachlassvertrag mit Vermögensabtretung',
     'Nichteröffnung mangels Vermögens',
+    'Overseas winding up',
     'Provisorische Nachlassstundung',
+    'Receivership',
     'Sanierungsverfahren eröffnet',
     'Schluss des Konkursverfahrens',
     'Schuldenruf',
     'Sicherungsmaßnahmen',
     'Widerruf des Konkurses',
+    'Winding-up order',
 ]
 
 
@@ -508,6 +542,8 @@ class PaginationInfo(TypedDict):
 
 class Person(TypedDict):
     age: NotRequired[int | None]
+    birth_month: NotRequired[int | None]
+    birth_year: NotRequired[int | None]
     city: NotRequired[str | None]
     date_of_birth: NotRequired[str | None]
     first_name: NotRequired[str | None]
@@ -537,8 +573,10 @@ class PotentialBeneficialOwner(TypedDict):
 
 class PreviousRegistration(TypedDict):
     eu_id: NotRequired[str | None]
-    kind: Literal['seat_move', 'court_change']
+    kind: Literal['seat_move', 'court_change', 'formwechsel', 'merger_continuity']
+    name: NotRequired[str | None]
     original_first_register_entry_at: NotRequired[str | None]
+    original_founded_at: NotRequired[str | None]
     register_court: NotRequired[str | None]
     register_number: NotRequired[int | None]
     register_type: NotRequired[str | None]
@@ -866,6 +904,7 @@ class RelationshipsBlock(TypedDict):
 
 class SearchHit(TypedDict):
     address: NotRequired[Address | None]
+    company_number: NotRequired[str | None]
     country_code: Literal['DE', 'CH', 'AT', 'GB']
     cpv_award_codes: NotRequired[list[str]]
     display_name: str
@@ -1028,6 +1067,7 @@ class UboCoverage(TypedDict):
 
 class UboEdge(TypedDict):
     object: NotRequired[Literal['ubo_edge']]
+    share_band: NotRequired[Literal['25-50', '50-75', '75-100', 'over-25'] | None]
     share_percent: NotRequired[float | None]
     source_id: str
     target_id: str
@@ -1048,6 +1088,29 @@ class UboNode(TypedDict):
         ]
         | None
     ]
+
+
+class UkFilingStatusBlock(TypedDict):
+    accounting_reference_day: NotRequired[int | None]
+    accounting_reference_month: NotRequired[int | None]
+    accounts_category: NotRequired[str | None]
+    accounts_last_made_up_to: NotRequired[str | None]
+    accounts_next_due: NotRequired[str | None]
+    accounts_overdue: NotRequired[bool | None]
+    charges_outstanding: NotRequired[int | None]
+    charges_part_satisfied: NotRequired[int | None]
+    charges_satisfied: NotRequired[int | None]
+    charges_total: NotRequired[int | None]
+    confirmation_statement_last_made_up_to: NotRequired[str | None]
+    confirmation_statement_next_due: NotRequired[str | None]
+    confirmation_statement_overdue: NotRequired[bool | None]
+    country_of_origin: NotRequired[str | None]
+    data_as_of: NotRequired[str | None]
+    dormant: NotRequired[bool | None]
+    general_partners: NotRequired[int | None]
+    limited_partners: NotRequired[int | None]
+    object: NotRequired[Literal['uk_filing_status']]
+    registered_office_country: NotRequired[str | None]
 
 
 class WebhookTestAttempt(TypedDict):
@@ -1141,10 +1204,19 @@ class BalanceSheetPositions(TypedDict):
 
 
 class BeneficialOwner(TypedDict):
+    control_types: NotRequired[
+        list[
+            Literal[
+                'shares', 'voting_rights', 'appoints_directors', 'significant_influence'
+            ]
+        ]
+        | None
+    ]
     effective_share_percent: float
     node_id: str
     object: NotRequired[Literal['beneficial_owner']]
     person: Person
+    share_band: NotRequired[Literal['25-50', '50-75', '75-100', 'over-25'] | None]
 
 
 class BoardChange(TypedDict):
@@ -1197,6 +1269,15 @@ class CapitalEntry(TypedDict):
     entry_date: NotRequired[str | None]
     entry_number: NotRequired[int | None]
     object: NotRequired[Literal['capital_entry']]
+
+
+class CharityFinancialYear(TypedDict):
+    gross_expenditure: NotRequired[Money | None]
+    gross_income: NotRequired[Money | None]
+    object: NotRequired[Literal['charity_financial_year']]
+    period_end: str
+    period_start: NotRequired[str | None]
+    suppressed: NotRequired[bool]
 
 
 class CompanyDocumentDownload(TypedDict):
@@ -1490,11 +1571,38 @@ class UboReport(TypedDict):
     potential_beneficial_owners: NotRequired[list[PotentialBeneficialOwner]]
 
 
+class CharityBlock(TypedDict):
+    activities: NotRequired[str | None]
+    areas_of_operation: NotRequired[list[CharityAreaOfOperation]]
+    attribution: str
+    charity_register: NotRequired[Literal['charity_commission_england_wales']]
+    charity_type: NotRequired[str | None]
+    classifications: NotRequired[list[CharityClassification]]
+    data_as_of: str
+    financial_history: NotRequired[list[CharityFinancialYear]]
+    in_administration: NotRequired[bool | None]
+    insolvent: NotRequired[bool | None]
+    latest_gross_expenditure: NotRequired[Money | None]
+    latest_gross_income: NotRequired[Money | None]
+    latest_period_end: NotRequired[str | None]
+    name: str
+    object: NotRequired[Literal['charity']]
+    registered_at: NotRequired[str | None]
+    registered_charity_number: int
+    removed_at: NotRequired[str | None]
+    reporting_status: NotRequired[str | None]
+    source_url: str
+    status: Literal['registered', 'removed']
+
+
 class CompanyDetail(TypedDict):
     address: NotRequired[Address | None]
     ai_insights: NotRequired[AiInsightsBlock | None]
+    attribution: NotRequired[str | None]
     business_info: NotRequired[BusinessBlock | None]
     business_purpose: NotRequired[str | None]
+    charity: NotRequired[CharityBlock | None]
+    company_number: NotRequired[str | None]
     contact: ContactBlock
     country_code: Literal['DE', 'CH', 'AT', 'GB']
     display_name: str
@@ -1504,6 +1612,7 @@ class CompanyDetail(TypedDict):
     eu_sme_declaration: NotRequired[EuSmeDeclaration | None]
     financial_summary: NotRequired[FinancialSummaryBlock | None]
     first_register_entry_at: NotRequired[str | None]
+    founded_at: NotRequired[str | None]
     founder_profile: NotRequired[FounderProfileBlock | None]
     founding_document_date: NotRequired[str | None]
     freshness: Freshness
@@ -1527,6 +1636,7 @@ class CompanyDetail(TypedDict):
     registered_seat: NotRequired[str | None]
     share_capital: NotRequired[Money | None]
     uid: NotRequired[str | None]
+    uk_filing_status: NotRequired[UkFilingStatusBlock | None]
     ust_id_nr: NotRequired[str | None]
     wirtschafts_id_nr: NotRequired[str | None]
 
